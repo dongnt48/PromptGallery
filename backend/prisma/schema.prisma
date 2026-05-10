@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String    @unique @db.VarChar(50)
+  email         String    @unique @db.VarChar(255)
+  password_hash String    @db.VarChar(255)
+  avatar_url    String?   @db.VarChar(255)
+  role          String    @default("user") @db.VarChar(20)
+  bio           String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  prompts   Prompt[]
+  likes     Like[]
+  bookmarks Bookmark[]
+
+  @@map("users")
+}
+
+model Prompt {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  content         String
+  negativePrompt  String?   @map("negative_prompt")
+  aiModel         String    @map("ai_model") @db.VarChar(50)
+  seed            String?   @db.VarChar(50)
+  sampler         String?   @db.VarChar(50)
+  steps           Int?
+  cfgScale        Decimal?  @map("cfg_scale") @db.Decimal(5, 2)
+  viewsCount      Int       @default(0) @map("views_count")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images    Image[]
+  likes     Like[]
+  bookmarks Bookmark[]
+  tags      PromptTag[]
+
+  @@index([aiModel])
+  @@index([createdAt(sort: Desc)])
+  @@map("prompts")
+}
+
+model Image {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  promptId  String   @map("prompt_id") @db.Uuid
+  imageUrl  String   @map("image_url") @db.VarChar(255)
+  isCover   Boolean  @default(false) @map("is_cover")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([promptId, isCover])
+  @@map("images")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  slug String @unique @db.VarChar(50)
+
+  prompts PromptTag[]
+
+  @@map("tags")
+}
+
+model PromptTag {
+  promptId String @map("prompt_id") @db.Uuid
+  tagId    Int    @map("tag_id")
+
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([promptId, tagId])
+  @@map("prompt_tags")
+}
+
+model Like {
+  userId    String   @map("user_id") @db.Uuid
+  promptId  String   @map("prompt_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@id([userId, promptId])
+  @@map("likes")
+}
+
+model Bookmark {
+  userId    String   @map("user_id") @db.Uuid
+  promptId  String   @map("prompt_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@id([userId, promptId])
+  @@map("bookmarks")
+}
