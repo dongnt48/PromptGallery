@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { PromptsService } from './prompts.service';
 
 @Controller('prompts')
@@ -6,7 +6,10 @@ export class PromptsController {
   constructor(private readonly promptsService: PromptsService) {}
 
   @Get()
-  findAll() {
-    return this.promptsService.findAll();
+  findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.promptsService.findAll(page, limit);
   }
 }

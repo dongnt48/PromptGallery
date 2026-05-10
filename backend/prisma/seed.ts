@@ -129,6 +129,127 @@ async function main() {
       images: [
         'https://picsum.photos/id/158/800/1200', // Portrait
       ],
+    },
+    // Adding 20 more prompts
+    {
+      content: 'Cyberpunk samurai standing on a skyscraper, katana glowing blue, rain, city lights in background.',
+      aiModel: 'Midjourney v6',
+      tags: ['sci-fi', 'cinematic'],
+      images: ['https://picsum.photos/id/200/800/1200'],
+    },
+    {
+      content: 'Enchanted forest with bioluminescent mushrooms and fairies, whimsical atmosphere.',
+      aiModel: 'DALL-E 3',
+      tags: ['fantasy'],
+      images: ['https://picsum.photos/id/201/800/1000'],
+    },
+    {
+      content: 'Steampunk flying machine over a Victorian city, sunset, brass and gears.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['fantasy', 'sci-fi'],
+      images: ['https://picsum.photos/id/202/800/600'],
+    },
+    {
+      content: 'Hyper-realistic slice of pizza with melting cheese, macro photography.',
+      aiModel: 'Midjourney v6',
+      tags: ['cinematic'],
+      images: ['https://picsum.photos/id/203/800/800'],
+    },
+    {
+      content: 'Underwater city with transparent domes, futuristic submarines, deep sea creatures.',
+      aiModel: 'Midjourney v6',
+      tags: ['sci-fi'],
+      images: ['https://picsum.photos/id/204/800/1400'],
+    },
+    {
+      content: 'Portrait of a wise old wizard with a long white beard, holding a crystal staff.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['fantasy', 'portrait'],
+      images: ['https://picsum.photos/id/206/800/1100'],
+    },
+    {
+      content: 'Minimalist white desk setup with a MacBook, a small plant, and a cup of coffee.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['minimalist'],
+      images: ['https://picsum.photos/id/208/800/1000'],
+    },
+    {
+      content: 'Majestic lion with a mane of flowers, vibrant colors, dreamlike.',
+      aiModel: 'DALL-E 3',
+      tags: ['fantasy', 'portrait'],
+      images: ['https://picsum.photos/id/209/800/1200'],
+    },
+    {
+      content: 'Vintage car driving through a desert at sunset, retro film style.',
+      aiModel: 'Midjourney v6',
+      tags: ['cinematic'],
+      images: ['https://picsum.photos/id/210/800/600'],
+    },
+    {
+      content: 'Futuristic laboratory with high-tech equipment and a robotic arm.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['sci-fi'],
+      images: ['https://picsum.photos/id/211/800/900'],
+    },
+    {
+      content: 'Cozy cottage in a snowy valley, smoke rising from the chimney, northern lights.',
+      aiModel: 'Midjourney v6',
+      tags: ['fantasy', 'cinematic'],
+      images: ['https://picsum.photos/id/212/800/1300'],
+    },
+    {
+      content: 'Abstract painting with bold strokes of red, blue, and yellow.',
+      aiModel: 'DALL-E 3',
+      tags: ['minimalist'],
+      images: ['https://picsum.photos/id/213/800/800'],
+    },
+    {
+      content: 'Cybernetic eye with intricate circuitry, glowing iris, extreme close-up.',
+      aiModel: 'Midjourney v6',
+      tags: ['sci-fi', 'portrait'],
+      images: ['https://picsum.photos/id/214/800/1200'],
+    },
+    {
+      content: 'Gothic cathedral at moonlight, ravens flying, dark and moody.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['fantasy', 'cinematic'],
+      images: ['https://picsum.photos/id/215/800/1500'],
+    },
+    {
+      content: 'Surreal landscape with melting clocks and floating fish.',
+      aiModel: 'DALL-E 3',
+      tags: ['fantasy'],
+      images: ['https://picsum.photos/id/216/800/1000'],
+    },
+    {
+      content: 'Retro-futuristic space station interior, neon panels, starfield view.',
+      aiModel: 'Midjourney v6',
+      tags: ['sci-fi'],
+      images: ['https://picsum.photos/id/217/800/700'],
+    },
+    {
+      content: 'Greek god statue in a modern museum, dramatic shadows.',
+      aiModel: 'Stable Diffusion XL',
+      tags: ['portrait', 'minimalist'],
+      images: ['https://picsum.photos/id/218/800/1100'],
+    },
+    {
+      content: 'Lush tropical beach with crystal clear water and palm trees.',
+      aiModel: 'Midjourney v6',
+      tags: ['cinematic'],
+      images: ['https://picsum.photos/id/219/800/600'],
+    },
+    {
+      content: 'Cute robot holding a sunflower, Pixar style.',
+      aiModel: 'DALL-E 3',
+      tags: ['fantasy'],
+      images: ['https://picsum.photos/id/220/800/1000'],
+    },
+    {
+      content: 'Dark knight in black armor, standing on a battlefield, fire and smoke.',
+      aiModel: 'Midjourney v6',
+      tags: ['fantasy', 'cinematic'],
+      images: ['https://picsum.photos/id/221/800/1400'],
     }
   ];
 
