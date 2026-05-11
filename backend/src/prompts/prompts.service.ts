@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PromptsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
@@ -45,30 +45,5 @@ export class PromptsService {
         hasMore: page * limit < total,
       },
     };
-  }
-
-  async findOne(id: bigint) {
-    return this.prisma.prompt.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            avatarUrl: true,
-            bio: true,
-          },
-        },
-        images: {
-          orderBy: { isCover: 'desc' },
-        },
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-      },
-    });
   }
 }
