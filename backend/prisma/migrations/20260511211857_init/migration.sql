@@ -1,9 +1,11 @@
 -- CreateTable
 CREATE TABLE "users" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "id" BIGSERIAL NOT NULL,
     "username" VARCHAR(50) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "password_hash" VARCHAR(255) NOT NULL,
+    "name" VARCHAR(100),
+    "password_hash" VARCHAR(255),
+    "google_id" VARCHAR(255),
     "avatar_url" VARCHAR(255),
     "role" VARCHAR(20) NOT NULL DEFAULT 'user',
     "bio" TEXT,
@@ -15,8 +17,8 @@ CREATE TABLE "users" (
 
 -- CreateTable
 CREATE TABLE "prompts" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "user_id" UUID NOT NULL,
+    "id" BIGSERIAL NOT NULL,
+    "user_id" BIGINT NOT NULL,
     "content" TEXT NOT NULL,
     "negative_prompt" TEXT,
     "ai_model" VARCHAR(50) NOT NULL,
@@ -24,6 +26,7 @@ CREATE TABLE "prompts" (
     "sampler" VARCHAR(50),
     "steps" INTEGER,
     "cfg_scale" DECIMAL(5,2),
+    "is_public" BOOLEAN NOT NULL DEFAULT true,
     "views_count" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -33,8 +36,8 @@ CREATE TABLE "prompts" (
 
 -- CreateTable
 CREATE TABLE "images" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "prompt_id" UUID NOT NULL,
+    "id" BIGSERIAL NOT NULL,
+    "prompt_id" BIGINT NOT NULL,
     "image_url" VARCHAR(255) NOT NULL,
     "is_cover" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -44,7 +47,7 @@ CREATE TABLE "images" (
 
 -- CreateTable
 CREATE TABLE "tags" (
-    "id" SERIAL NOT NULL,
+    "id" BIGSERIAL NOT NULL,
     "name" VARCHAR(50) NOT NULL,
     "slug" VARCHAR(50) NOT NULL,
 
@@ -53,16 +56,16 @@ CREATE TABLE "tags" (
 
 -- CreateTable
 CREATE TABLE "prompt_tags" (
-    "prompt_id" UUID NOT NULL,
-    "tag_id" INTEGER NOT NULL,
+    "prompt_id" BIGINT NOT NULL,
+    "tag_id" BIGINT NOT NULL,
 
     CONSTRAINT "prompt_tags_pkey" PRIMARY KEY ("prompt_id","tag_id")
 );
 
 -- CreateTable
 CREATE TABLE "likes" (
-    "user_id" UUID NOT NULL,
-    "prompt_id" UUID NOT NULL,
+    "user_id" BIGINT NOT NULL,
+    "prompt_id" BIGINT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "likes_pkey" PRIMARY KEY ("user_id","prompt_id")
@@ -70,8 +73,8 @@ CREATE TABLE "likes" (
 
 -- CreateTable
 CREATE TABLE "bookmarks" (
-    "user_id" UUID NOT NULL,
-    "prompt_id" UUID NOT NULL,
+    "user_id" BIGINT NOT NULL,
+    "prompt_id" BIGINT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "bookmarks_pkey" PRIMARY KEY ("user_id","prompt_id")
@@ -82,6 +85,9 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_google_id_key" ON "users"("google_id");
 
 -- CreateIndex
 CREATE INDEX "prompts_ai_model_idx" ON "prompts"("ai_model");

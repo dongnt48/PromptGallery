@@ -18,6 +18,7 @@ model User {
   bio          String?
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
   prompts   Prompt[]
   likes     Like[]
@@ -31,15 +32,11 @@ model Prompt {
   userId         BigInt    @map("user_id")
   content        String
   negativePrompt String?   @map("negative_prompt")
-  aiModel        String    @map("ai_model") @db.VarChar(50)
-  seed           String?   @db.VarChar(50)
-  sampler        String?   @db.VarChar(50)
-  steps          Int?
-  cfgScale       Decimal?  @map("cfg_scale") @db.Decimal(5, 2)
+  aiModel        String?   @map("ai_model") @db.VarChar(50)
   isPublic       Boolean   @default(true) @map("is_public")
-  viewsCount     Int       @default(0) @map("views_count")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
 
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   images    Image[]
