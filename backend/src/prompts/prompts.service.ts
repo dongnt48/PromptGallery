@@ -46,4 +46,29 @@ export class PromptsService {
       },
     };
   }
+
+  async findOne(id: bigint) {
+    return this.prisma.prompt.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        },
+        images: {
+          orderBy: { isCover: 'desc' },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+    });
+  }
 }
