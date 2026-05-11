@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, LogOut } from 'lucide-react';
+import LoginModal from './LoginModal';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { user, logout } = useAuth();
+
   return (
     <>
       <nav className="navbar">
@@ -30,14 +36,45 @@ const Navbar = () => {
             <button className="btn-primary">
               Create
             </button>
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60" 
-              alt="User" 
-              className="avatar" 
-            />
+            {user ? (
+              <div className="user-menu-container">
+                <img 
+                  src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`} 
+                  alt={user.name || user.username} 
+                  className="avatar" 
+                  referrerPolicy="no-referrer"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  onError={(e) => {
+                    e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
+                  }}
+                />
+                {isDropdownOpen && (
+                  <div className="user-dropdown">
+                    <div className="dropdown-header">
+                      <span className="username">{user.name || user.username}</span>
+                      <span className="email">{user.email}</span>
+                    </div>
+                    <button className="dropdown-item logout" onClick={logout}>
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                className="nav-link" 
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                onClick={() => setIsModalOpen(true)}
+              >
+                Login
+              </button>
+            )}
           </div>
         </div>
       </nav>
+      
+      <LoginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       
       <div className="subnav">
         <button className="filter-chip active">All Styles</button>

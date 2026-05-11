@@ -585,3 +585,197 @@ button {
   background: var(--surface-variant);
 }
 
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--rounded-3xl);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-header h2 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  color: var(--on-surface-variant);
+  font-size: 14px;
+}
+
+.google-login-btn {
+  width: 100%;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: white;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--rounded-full);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--on-surface);
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.google-login-btn:hover {
+  background-color: #f8fafc;
+  border-color: var(--outline);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.modal-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+.modal-footer a {
+  color: var(--accent-sky-blue);
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--surface-container-high);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.avatar:hover {
+  border-color: var(--accent-sky-blue);
+  transform: scale(1.05);
+}
+
+.user-menu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 200px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--rounded-2xl);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 8px;
+  z-index: 1000;
+  animation: dropdownFadeIn 0.3s ease;
+  transform-origin: top right;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline-variant);
+  margin-bottom: 8px;
+}
+
+.dropdown-header .username {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--on-surface);
+}
+
+.dropdown-header .email {
+  display: block;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--on-surface);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--rounded-lg);
+  transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+  background: var(--surface-container-low);
+  color: var(--error);
+}
+
+.dropdown-item.logout {
+  color: #ef4444;
+}

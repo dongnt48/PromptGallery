@@ -38,7 +38,7 @@ const Home = () => {
           model: prompt.aiModel,
           author: {
             name: prompt.user.username,
-            avatar: prompt.user.avatar_url
+            avatar: prompt.user.avatarUrl
           }
         }));
         

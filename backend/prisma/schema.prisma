@@ -7,15 +7,17 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username      String    @unique @db.VarChar(50)
-  email         String    @unique @db.VarChar(255)
-  password_hash String    @db.VarChar(255)
-  avatar_url    String?   @db.VarChar(255)
-  role          String    @default("user") @db.VarChar(20)
-  bio           String?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id           BigInt    @id @default(autoincrement())
+  username     String    @unique @db.VarChar(50)
+  email        String    @unique @db.VarChar(255)
+  name         String?   @db.VarChar(100)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  googleId     String?   @unique @map("google_id") @db.VarChar(255)
+  avatarUrl    String?   @map("avatar_url") @db.VarChar(255)
+  role         String    @default("user") @db.VarChar(20)
+  bio          String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   prompts   Prompt[]
   likes     Like[]
@@ -25,18 +27,18 @@ model User {
 }
 
 model Prompt {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String    @map("user_id") @db.Uuid
-  content         String
-  negativePrompt  String?   @map("negative_prompt")
-  aiModel         String    @map("ai_model") @db.VarChar(50)
-  seed            String?   @db.VarChar(50)
-  sampler         String?   @db.VarChar(50)
-  steps           Int?
-  cfgScale        Decimal?  @map("cfg_scale") @db.Decimal(5, 2)
-  viewsCount      Int       @default(0) @map("views_count")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             BigInt    @id @default(autoincrement())
+  userId         BigInt    @map("user_id")
+  content        String
+  negativePrompt String?   @map("negative_prompt")
+  aiModel        String    @map("ai_model") @db.VarChar(50)
+  seed           String?   @db.VarChar(50)
+  sampler        String?   @db.VarChar(50)
+  steps          Int?
+  cfgScale       Decimal?  @map("cfg_scale") @db.Decimal(5, 2)
+  viewsCount     Int       @default(0) @map("views_count")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   images    Image[]
@@ -50,8 +52,8 @@ model Prompt {
 }
 
 model Image {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  promptId  String   @map("prompt_id") @db.Uuid
+  id        BigInt   @id @default(autoincrement())
+  promptId  BigInt   @map("prompt_id")
   imageUrl  String   @map("image_url") @db.VarChar(255)
   isCover   Boolean  @default(false) @map("is_cover")
   createdAt DateTime @default(now()) @map("created_at")
@@ -63,7 +65,7 @@ model Image {
 }
 
 model Tag {
-  id   Int    @id @default(autoincrement())
+  id   BigInt @id @default(autoincrement())
   name String @unique @db.VarChar(50)
   slug String @unique @db.VarChar(50)
 
@@ -73,8 +75,8 @@ model Tag {
 }
 
 model PromptTag {
-  promptId String @map("prompt_id") @db.Uuid
-  tagId    Int    @map("tag_id")
+  promptId BigInt @map("prompt_id")
+  tagId    BigInt @map("tag_id")
 
   prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
@@ -84,8 +86,8 @@ model PromptTag {
 }
 
 model Like {
-  userId    String   @map("user_id") @db.Uuid
-  promptId  String   @map("prompt_id") @db.Uuid
+  userId    BigInt   @map("user_id")
+  promptId  BigInt   @map("prompt_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -96,8 +98,8 @@ model Like {
 }
 
 model Bookmark {
-  userId    String   @map("user_id") @db.Uuid
-  promptId  String   @map("prompt_id") @db.Uuid
+  userId    BigInt   @map("user_id")
+  promptId  BigInt   @map("prompt_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

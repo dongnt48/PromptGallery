@@ -19,7 +19,7 @@ export class PromptsService {
             select: {
               id: true,
               username: true,
-              avatar_url: true,
+              avatarUrl: true,
             },
           },
           images: {

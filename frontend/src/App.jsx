@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import MyLibrary from './pages/MyLibrary';
 import ArtworkDetail from './pages/ArtworkDetail';
+import LoginSuccess from './pages/LoginSuccess';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/library" element={<MyLibrary />} />
             <Route path="/artwork/:id" element={<ArtworkDetail />} />
+            <Route path="/login-success" element={<LoginSuccess />} />
           </Routes>
         </main>
         <Footer />

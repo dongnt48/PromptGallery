@@ -17,8 +17,8 @@ async function main() {
     create: {
       email: 'test@example.com',
       username: 'lumina_artist',
-      password_hash: 'mock_hash',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop',
+      passwordHash: 'mock_hash',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop',
       bio: 'Digital artist exploring AI generated visuals.',
     },
   });
