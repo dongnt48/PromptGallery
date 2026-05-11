@@ -36,6 +36,7 @@ model Prompt {
   sampler        String?   @db.VarChar(50)
   steps          Int?
   cfgScale       Decimal?  @map("cfg_scale") @db.Decimal(5, 2)
+  isPublic       Boolean   @default(true) @map("is_public")
   viewsCount     Int       @default(0) @map("views_count")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")

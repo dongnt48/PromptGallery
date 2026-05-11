@@ -4,24 +4,25 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import MyLibrary from './pages/MyLibrary';
-import ArtworkDetail from './pages/ArtworkDetail';
 import LoginSuccess from './pages/LoginSuccess';
+import { NotificationProvider } from './context/NotificationContext';
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/library" element={<MyLibrary />} />
-            <Route path="/artwork/:id" element={<ArtworkDetail />} />
-            <Route path="/login-success" element={<LoginSuccess />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <NotificationProvider>
+        <div className="app-container">
+          <Navbar />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/library" element={<MyLibrary />} />
+              <Route path="/login-success" element={<LoginSuccess />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </NotificationProvider>
     </Router>
   );
 }

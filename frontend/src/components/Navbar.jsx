@@ -1,13 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Bell, LogOut } from 'lucide-react';
 import LoginModal from './LoginModal';
+import CreatePromptModal from './CreatePromptModal';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markAllRead } = useNotifications();
+
+  const notifRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setIsNotifOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCreateClick = () => {
+    if (!user) {
+      setIsModalOpen(true);
+      return;
+    }
+    setIsCreateOpen(true);
+  };
+
+  const handleNotifClick = () => {
+    setIsNotifOpen(!isNotifOpen);
+    if (!isNotifOpen && unreadCount > 0) {
+      markAllRead();
+    }
+  };
+
+  const formatTimeAgo = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
 
   return (
     <>
@@ -23,25 +70,61 @@ const Navbar = () => {
               <Link to="/" className="nav-link">Following</Link>
             </div>
           </div>
-          
-          <div className="navbar-search">
-            <Search size={18} color="var(--outline-variant)" />
-            <input type="text" placeholder="Search prompts, styles, or creators..." />
-          </div>
-          
+
           <div className="navbar-actions">
-            <button className="icon-btn">
-              <Bell size={20} />
-            </button>
-            <button className="btn-primary">
+            <div className="navbar-search">
+              <Search size={18} color="var(--outline-variant)" />
+              <input type="text" placeholder="Search prompts..." />
+            </div>
+
+            {/* Notification Bell */}
+            <div className="notif-container" ref={notifRef}>
+              <button className="icon-btn" onClick={handleNotifClick}>
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <div className="notif-dropdown">
+                  <div className="notif-dropdown-header">
+                    <h4>Notifications</h4>
+                    {notifications.length > 0 && (
+                      <button className="notif-clear" onClick={() => { markAllRead(); }}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="notif-dropdown-body">
+                    {notifications.length === 0 ? (
+                      <div className="notif-empty">
+                        <Bell size={24} color="var(--outline-variant)" />
+                        <p>No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifications.slice(0, 10).map(n => (
+                        <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
+                          <span className="notif-message">{n.message}</span>
+                          <span className="notif-time">{formatTimeAgo(n.timestamp)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button className="btn-primary" onClick={handleCreateClick}>
               Create
             </button>
+
             {user ? (
-              <div className="user-menu-container">
-                <img 
-                  src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`} 
-                  alt={user.name || user.username} 
-                  className="avatar" 
+              <div className="user-menu-container" ref={userMenuRef}>
+                <img
+                  src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
+                  alt={user.name || user.username}
+                  className="avatar"
                   referrerPolicy="no-referrer"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   onError={(e) => {
@@ -62,8 +145,8 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button 
-                className="nav-link" 
+              <button
+                className="nav-link"
                 style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 onClick={() => setIsModalOpen(true)}
               >
@@ -73,22 +156,9 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
-      
+
       <LoginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      
-      <div className="subnav">
-        <button className="filter-chip active">All Styles</button>
-        <button className="filter-chip">Anime</button>
-        <button className="filter-chip">Cinematic</button>
-        <button className="filter-chip">Realistic</button>
-        <button className="filter-chip">Fantasy</button>
-        <button className="filter-chip">Flux</button>
-        <button className="filter-chip">Midjourney</button>
-        <button className="filter-chip">Video</button>
-        <button className="filter-chip">3D Render</button>
-        <button className="filter-chip">Concept Art</button>
-        <button className="filter-chip">Cyberpunk</button>
-      </div>
+      <CreatePromptModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
     </>
   );
 };
