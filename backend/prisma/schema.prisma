@@ -7,42 +7,40 @@ datasource db {
 }
 
 model User {
-  id           BigInt    @id @default(autoincrement())
-  username     String    @unique @db.VarChar(50)
-  email        String    @unique @db.VarChar(255)
-  name         String?   @db.VarChar(100)
-  passwordHash String?   @map("password_hash") @db.VarChar(255)
-  googleId     String?   @unique @map("google_id") @db.VarChar(255)
-  avatarUrl    String?   @map("avatar_url") @db.VarChar(255)
-  role         String    @default("user") @db.VarChar(20)
+  id           BigInt     @id @default(autoincrement())
+  username     String     @unique @db.VarChar(50)
+  email        String     @unique @db.VarChar(255)
+  name         String?    @db.VarChar(100)
+  passwordHash String?    @map("password_hash") @db.VarChar(255)
+  googleId     String?    @unique @map("google_id") @db.VarChar(255)
+  avatarUrl    String?    @map("avatar_url") @db.VarChar(255)
+  role         String     @default("user") @db.VarChar(20)
   bio          String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at")
-
-  prompts   Prompt[]
-  likes     Like[]
-  bookmarks Bookmark[]
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  isDelete     Boolean    @default(false) @map("is_delete")
+  bookmarks    Bookmark[]
+  likes        Like[]
+  prompts      Prompt[]
 
   @@map("users")
 }
 
 model Prompt {
-  id             BigInt    @id @default(autoincrement())
-  userId         BigInt    @map("user_id")
+  id             BigInt      @id @default(autoincrement())
+  userId         BigInt      @map("user_id")
   content        String
-  negativePrompt String?   @map("negative_prompt")
-  aiModel        String?   @map("ai_model") @db.VarChar(50)
-  isPublic       Boolean   @default(true) @map("is_public")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
-
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images    Image[]
-  likes     Like[]
-  bookmarks Bookmark[]
-  tags      PromptTag[]
+  negativePrompt String?     @map("negative_prompt")
+  aiModel        String?     @map("ai_model") @db.VarChar(50)
+  isPublic       Boolean     @default(true) @map("is_public")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  isDelete       Boolean     @default(false) @map("is_delete")
+  bookmarks      Bookmark[]
+  images         Image[]
+  likes          Like[]
+  tags           PromptTag[]
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([aiModel])
   @@index([createdAt(sort: Desc)])
@@ -55,18 +53,16 @@ model Image {
   imageUrl  String   @map("image_url") @db.VarChar(255)
   isCover   Boolean  @default(false) @map("is_cover")
   createdAt DateTime @default(now()) @map("created_at")
-
-  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
 
   @@index([promptId, isCover])
   @@map("images")
 }
 
 model Tag {
-  id   BigInt @id @default(autoincrement())
-  name String @unique @db.VarChar(50)
-  slug String @unique @db.VarChar(50)
-
+  id      BigInt      @id @default(autoincrement())
+  name    String      @unique @db.VarChar(50)
+  slug    String      @unique @db.VarChar(50)
   prompts PromptTag[]
 
   @@map("tags")
@@ -75,9 +71,8 @@ model Tag {
 model PromptTag {
   promptId BigInt @map("prompt_id")
   tagId    BigInt @map("tag_id")
-
-  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
-  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([promptId, tagId])
   @@map("prompt_tags")
@@ -87,9 +82,8 @@ model Like {
   userId    BigInt   @map("user_id")
   promptId  BigInt   @map("prompt_id")
   createdAt DateTime @default(now()) @map("created_at")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, promptId])
   @@map("likes")
@@ -99,9 +93,8 @@ model Bookmark {
   userId    BigInt   @map("user_id")
   promptId  BigInt   @map("prompt_id")
   createdAt DateTime @default(now()) @map("created_at")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, promptId])
   @@map("bookmarks")

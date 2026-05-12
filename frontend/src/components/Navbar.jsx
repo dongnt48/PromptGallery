@@ -66,8 +66,8 @@ const Navbar = () => {
             </Link>
             <div className="navbar-links">
               <Link to="/" className="nav-link active">Explore</Link>
-              <Link to="/" className="nav-link">Trending</Link>
-              <Link to="/" className="nav-link">Following</Link>
+              <Link to="/" className="nav-link">My Prompts</Link>
+              <Link to="/" className="nav-link">Bookmarks</Link>
             </div>
           </div>
 
