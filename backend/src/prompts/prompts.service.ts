@@ -14,12 +14,16 @@ export class PromptsService {
 
   constructor(private prisma: PrismaService) {}
 
-  async findAll(page: number = 1, limit: number = 10, userId?: bigint) {
+  async findAll(page: number = 1, limit: number = 10, userId?: bigint, authorId?: bigint) {
     const skip = (page - 1) * limit;
     const take = limit;
 
     const [items, total] = await Promise.all([
       this.prisma.prompt.findMany({
+        where: {
+          isDelete: false,
+          ...(authorId ? { userId: authorId } : {}),
+        },
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -49,7 +53,12 @@ export class PromptsService {
           bookmarks: userId ? { where: { userId } } : false,
         },
       }),
-      this.prisma.prompt.count(),
+      this.prisma.prompt.count({
+        where: {
+          isDelete: false,
+          ...(authorId ? { userId: authorId } : {}),
+        },
+      }),
     ]);
 
     const formattedData = items.map(item => ({
@@ -74,7 +83,7 @@ export class PromptsService {
 
   async findOne(id: bigint, userId?: bigint) {
     const prompt = await this.prisma.prompt.findUnique({
-      where: { id },
+      where: { id, isDelete: false },
       include: {
         user: {
           select: {
@@ -129,6 +138,72 @@ export class PromptsService {
     };
   }
 
+  async findBookmarks(page: number = 1, limit: number = 10, userId: bigint) {
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [bookmarks, total] = await Promise.all([
+      this.prisma.bookmark.findMany({
+        where: { userId, prompt: { isDelete: false } },
+        skip,
+        take,
+        include: {
+          prompt: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                },
+              },
+              images: {
+                orderBy: { isCover: 'desc' },
+              },
+              tags: {
+                include: {
+                  tag: true,
+                },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  bookmarks: true,
+                },
+              },
+              likes: { where: { userId } },
+              bookmarks: { where: { userId } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.bookmark.count({
+        where: { userId, prompt: { isDelete: false } },
+      }),
+    ]);
+
+    const formattedData = bookmarks.map(b => ({
+      ...b.prompt,
+      likesCount: b.prompt._count.likes,
+      bookmarksCount: b.prompt._count.bookmarks,
+      isLiked: b.prompt.likes.length > 0,
+      isBookmarked: true,
+    }));
+
+    return {
+      data: formattedData,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
+      },
+    };
+  }
+
+
   async toggleLike(userId: bigint, promptId: bigint) {
     const existing = await this.prisma.like.findUnique({
       where: { userId_promptId: { userId, promptId } },
@@ -163,6 +238,87 @@ export class PromptsService {
       });
       return { bookmarked: true };
     }
+  }
+
+  async deletePrompt(userId: bigint, promptId: bigint) {
+    const prompt = await this.prisma.prompt.findUnique({
+      where: { id: promptId },
+    });
+
+    if (!prompt) {
+      throw new Error('Prompt not found');
+    }
+
+    if (prompt.userId !== userId) {
+      throw new Error('You can only delete your own prompts');
+    }
+
+    // Soft delete by setting isDelete to true
+    return this.prisma.prompt.update({
+      where: { id: promptId },
+      data: { isDelete: true },
+    });
+  }
+
+  async updatePrompt(
+    userId: bigint,
+    promptId: bigint,
+    data: {
+      content?: string;
+      aiModel?: string;
+      isPublic?: boolean;
+      tags?: string[];
+      negativePrompt?: string;
+    },
+  ) {
+    const prompt = await this.prisma.prompt.findUnique({
+      where: { id: promptId },
+    });
+
+    if (!prompt) {
+      throw new Error('Prompt not found');
+    }
+
+    if (prompt.userId !== userId) {
+      throw new Error('You can only edit your own prompts');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Update basic fields
+      const updatedPrompt = await tx.prompt.update({
+        where: { id: promptId },
+        data: {
+          content: data.content,
+          aiModel: data.aiModel,
+          isPublic: data.isPublic,
+          negativePrompt: data.negativePrompt,
+        },
+      });
+
+      // 2. Update tags if provided
+      if (data.tags) {
+        // Remove old tags
+        await tx.promptTag.deleteMany({
+          where: { promptId },
+        });
+
+        // Add new tags
+        for (const tagName of data.tags) {
+          const slug = tagName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const tag = await tx.tag.upsert({
+            where: { slug },
+            update: {},
+            create: { name: tagName, slug },
+          });
+
+          await tx.promptTag.create({
+            data: { promptId, tagId: tag.id },
+          });
+        }
+      }
+
+      return updatedPrompt;
+    });
   }
 
   /**

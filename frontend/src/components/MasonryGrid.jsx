@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Heart, Bookmark, Copy, Check } from 'lucide-react';
+import { Heart, Bookmark, Copy, Check, Pencil, Trash2 } from 'lucide-react';
 import PromptDetailModal from './PromptDetailModal';
 import Toast, { useToast, copyWithToast } from './Toast';
 
-const MasonryGrid = ({ items, onToggleLike, onToggleBookmark, onInteractionSync }) => {
+const MasonryGrid = ({ items, onToggleLike, onToggleBookmark, onInteractionSync, onEdit, onDelete }) => {
   const [selectedPromptId, setSelectedPromptId] = useState(null);
   const { toast, showToast } = useToast();
 
@@ -20,6 +20,8 @@ const MasonryGrid = ({ items, onToggleLike, onToggleBookmark, onInteractionSync 
               onLike={() => onToggleLike(item.id)} 
               onBookmark={() => onToggleBookmark(item.id)}
               onCopy={() => copyWithToast(item.prompt, showToast)}
+              onEdit={onEdit ? () => onEdit(item) : null}
+              onDelete={onDelete ? () => onDelete(item.id) : null}
             />
           </div>
         ))}
@@ -39,7 +41,7 @@ const MasonryGrid = ({ items, onToggleLike, onToggleBookmark, onInteractionSync 
   );
 };
 
-const PromptCard = ({ item, onLike, onBookmark, onCopy }) => {
+const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete }) => {
   const [justCopied, setJustCopied] = useState(false);
 
   const handleCopy = (e) => {
@@ -74,6 +76,18 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy }) => {
                 </button>
                 <span className="count-label">{item.bookmarksCount || 0}</span>
               </div>
+              
+              {onEdit && (
+                <button className="icon-btn-small edit-btn" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}>
+                  <Pencil size={16} />
+                </button>
+              )}
+              
+              {onDelete && (
+                <button className="icon-btn-small delete-btn" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onDelete(); }}>
+                  <Trash2 size={16} color="#ef4444" />
+                </button>
+              )}
             </div>
         </div>
         <p className="prompt-text body-md">{item.prompt}</p>

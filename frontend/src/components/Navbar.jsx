@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Search, Bell, LogOut } from 'lucide-react';
 import LoginModal from './LoginModal';
 import CreatePromptModal from './CreatePromptModal';
@@ -12,6 +12,7 @@ const Navbar = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { user, logout } = useAuth();
+  const location = useLocation();
   const { notifications, unreadCount, markAllRead } = useNotifications();
 
   const notifRef = useRef(null);
@@ -65,9 +66,9 @@ const Navbar = () => {
               Lumina
             </Link>
             <div className="navbar-links">
-              <Link to="/" className="nav-link active">Explore</Link>
-              <Link to="/" className="nav-link">My Prompts</Link>
-              <Link to="/" className="nav-link">Bookmarks</Link>
+              <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Explore</Link>
+              <Link to="/my-prompts" className={`nav-link ${location.pathname === '/my-prompts' ? 'active' : ''}`}>My Prompts</Link>
+              <Link to="/bookmarks" className={`nav-link ${location.pathname === '/bookmarks' ? 'active' : ''}`}>Bookmarks</Link>
             </div>
           </div>
 

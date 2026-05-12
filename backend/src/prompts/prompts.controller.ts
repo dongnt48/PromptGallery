@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Query, Param, Req, Body,
+  Controller, Get, Post, Patch, Query, Param, Req, Body,
   ParseIntPipe, DefaultValuePipe, UseGuards, UseInterceptors, UploadedFiles,
 } from '@nestjs/common';
 import { PromptsService } from './prompts.service';
@@ -37,6 +37,27 @@ export class PromptsController {
     const userId = this.getUserIdFromRequest(req);
     return this.promptsService.findAll(page, limit, userId);
   }
+
+  @Get('my')
+  @UseGuards(AuthGuard('jwt'))
+  async getMyPrompts(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Req() req: any,
+  ) {
+    return this.promptsService.findAll(page, limit, req.user.id, req.user.id);
+  }
+
+  @Get('bookmarks')
+  @UseGuards(AuthGuard('jwt'))
+  async getBookmarks(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Req() req: any,
+  ) {
+    return this.promptsService.findBookmarks(page, limit, req.user.id);
+  }
+
 
   @Get('status/:jobId')
   getJobStatus(@Param('jobId') jobId: string) {
@@ -83,5 +104,33 @@ export class PromptsController {
   @UseGuards(AuthGuard('jwt'))
   async toggleBookmark(@Param('id') id: string, @Req() req: any) {
     return this.promptsService.toggleBookmark(req.user.id, BigInt(id));
+  }
+
+  @Post(':id/delete') // Using POST instead of DELETE to simplify frontend fetch if needed, or just @Delete
+  @UseGuards(AuthGuard('jwt'))
+  async deletePrompt(@Param('id') id: string, @Req() req: any) {
+    return this.promptsService.deletePrompt(req.user.id, BigInt(id));
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
+  async updatePrompt(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Req() req: any,
+  ) {
+    const tags = body.tags ? (typeof body.tags === 'string' ? JSON.parse(body.tags) : body.tags) : undefined;
+    
+    return this.promptsService.updatePrompt(
+      req.user.id,
+      BigInt(id),
+      {
+        content: body.content,
+        aiModel: body.aiModel,
+        isPublic: body.isPublic !== undefined ? (body.isPublic === 'true' || body.isPublic === true) : undefined,
+        tags,
+        negativePrompt: body.negativePrompt,
+      },
+    );
   }
 }

@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MasonryGrid } from '../components/MasonryGrid';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
+import CreatePromptModal from '../components/CreatePromptModal';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import Toast, { useToast } from '../components/Toast';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -11,15 +14,18 @@ const resolveImageUrl = (url) => {
   return `${API_BASE}${url}`;
 };
 
-const Home = () => {
-  const { token } = useAuth();
+const MyPrompts = () => {
+  const { token, user } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [editingPrompt, setEditingPrompt] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { toast, showToast } = useToast();
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
@@ -34,23 +40,27 @@ const Home = () => {
   }, [loading, hasMore]);
 
   useEffect(() => {
-    const fetchPrompts = async () => {
+    const fetchMyPrompts = async () => {
+      if (!token) return;
+
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/prompts?page=${page}&limit=5`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        const response = await fetch(`${API_BASE}/prompts/my?page=${page}&limit=10`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
-          throw new Error('Failed to fetch prompts');
+          throw new Error('Failed to fetch your prompts');
         }
         const result = await response.json();
-        
-        // Map backend data to MasonryGrid expected format
+
         const formattedItems = result.data.map(prompt => ({
           id: prompt.id,
           imageUrl: prompt.images && prompt.images.length > 0 ? resolveImageUrl(prompt.images[0].imageUrl) : '',
+          images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
+          isPublic: prompt.isPublic,
+          tags: prompt.tags,
           isLiked: prompt.isLiked,
           isBookmarked: prompt.isBookmarked,
           likesCount: prompt.likesCount,
@@ -60,9 +70,8 @@ const Home = () => {
             avatar: prompt.user.avatarUrl
           }
         }));
-        
+
         setItems(prevItems => {
-          // Prevent duplicates by checking ids
           const existingIds = new Set(prevItems.map(item => item.id));
           const newItems = formattedItems.filter(item => !existingIds.has(item.id));
           return [...prevItems, ...newItems];
@@ -75,9 +84,7 @@ const Home = () => {
       }
     };
 
-    if (hasMore) {
-      fetchPrompts();
-    }
+    fetchMyPrompts();
   }, [page, token, refreshKey]);
 
   // Listen for new prompt creation and refresh the list
@@ -98,12 +105,12 @@ const Home = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await res.json();
-      
+
       setItems(prev => prev.map(item => {
         if (item.id === id) {
           return {
@@ -125,12 +132,12 @@ const Home = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/bookmark`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await res.json();
-      
+
       setItems(prev => prev.map(item => {
         if (item.id === id) {
           return {
@@ -146,43 +153,118 @@ const Home = () => {
     }
   };
 
-  const syncInteraction = (id, interactionType, status) => {
+  const handleDelete = (id) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/prompts/${deleteId}/delete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setItems(prev => prev.filter(item => item.id !== deleteId));
+        showToast('✅ Prompt deleted successfully');
+      } else {
+        const err = await res.json();
+        showToast('❌ ' + (err.message || 'Failed to delete prompt'));
+      }
+    } catch (error) {
+      console.error('Error deleting prompt:', error);
+      showToast('❌ An error occurred while deleting');
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
+  const handleEdit = (item) => {
+    setEditingPrompt(item);
+  };
+
+  const handleUpdate = (updatedPrompt) => {
     setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        if (interactionType === 'like') {
-          return {
-            ...item,
-            isLiked: status,
-            likesCount: status ? item.likesCount + 1 : item.likesCount - 1
-          };
-        } else if (interactionType === 'bookmark') {
-          return {
-            ...item,
-            isBookmarked: status,
-            bookmarksCount: status ? item.bookmarksCount + 1 : item.bookmarksCount - 1
-          };
-        }
+      if (item.id === updatedPrompt.id) {
+        return {
+          ...item,
+          prompt: updatedPrompt.content,
+          model: updatedPrompt.aiModel,
+          isPublic: updatedPrompt.isPublic,
+          tags: updatedPrompt.tags // Note: formatting might need adjustment if tags structure changed
+        };
       }
       return item;
     }));
+    showToast('✅ Prompt updated successfully');
   };
+
+  if (!token) {
+    return (
+      <div className="page-container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>My Prompts</h2>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem' }}>Please log in to view your prompts.</p>
+        <button
+          className="btn-primary"
+          onClick={() => setShowLoginModal(true)}
+          style={{ padding: '12px 24px' }}
+        >
+          Log In
+        </button>
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </div>
+    );
+  }
 
   if (error) return <div className="page-container" style={{ padding: '40px', textAlign: 'center', color: 'red' }}>Error: {error}</div>;
 
   return (
     <div className="page-container" style={{ paddingBottom: '40px' }}>
-      <MasonryGrid 
-        items={items} 
-        onToggleLike={handleToggleLike} 
-        onToggleBookmark={handleToggleBookmark} 
-        onInteractionSync={syncInteraction}
-      />
+      <header style={{ padding: '40px 2rem 20px' }}>
+        <h5 style={{ fontSize: '1.5rem', color: 'var(--on-background)' }}>My Prompts</h5>
+        <p style={{ color: 'var(--on-surface-variant)', marginTop: '0.5rem' }}>You have created {items.length} prompts.</p>
+      </header>
+
+      {items.length === 0 && !loading ? (
+        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+          <p style={{ color: '#888', fontSize: '1.2rem' }}>You haven't created any prompts yet.</p>
+        </div>
+      ) : (
+        <MasonryGrid
+          items={items}
+          onToggleLike={handleToggleLike}
+          onToggleBookmark={handleToggleBookmark}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+        />
+      )}
+
       <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading more...</div>}
-      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>No more prompts to load.</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>}
+      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>End of your prompts.</div>}
+
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Prompt"
+        message="Are you sure you want to delete this prompt? This action cannot be undone."
+      />
+
+      <CreatePromptModal
+        key={editingPrompt ? `edit-${editingPrompt.id}` : 'create'}
+        isOpen={!!editingPrompt}
+        onClose={() => setEditingPrompt(null)}
+        prompt={editingPrompt}
+        onUpdate={handleUpdate}
+      />
+
+      <Toast message={toast} />
     </div>
   );
 };
 
-export default Home;
+export default MyPrompts;

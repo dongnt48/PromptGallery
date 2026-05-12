@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MasonryGrid } from '../components/MasonryGrid';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
+import Toast, { useToast } from '../components/Toast';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -11,7 +12,7 @@ const resolveImageUrl = (url) => {
   return `${API_BASE}${url}`;
 };
 
-const Home = () => {
+const Bookmarks = () => {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -20,6 +21,7 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { toast, showToast } = useToast();
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
@@ -34,23 +36,27 @@ const Home = () => {
   }, [loading, hasMore]);
 
   useEffect(() => {
-    const fetchPrompts = async () => {
+    const fetchBookmarks = async () => {
+      if (!token) return;
+      
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/prompts?page=${page}&limit=5`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        const response = await fetch(`${API_BASE}/prompts/bookmarks?page=${page}&limit=10`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
-          throw new Error('Failed to fetch prompts');
+          throw new Error('Failed to fetch bookmarked prompts');
         }
         const result = await response.json();
         
-        // Map backend data to MasonryGrid expected format
         const formattedItems = result.data.map(prompt => ({
           id: prompt.id,
           imageUrl: prompt.images && prompt.images.length > 0 ? resolveImageUrl(prompt.images[0].imageUrl) : '',
+          images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
+          isPublic: prompt.isPublic,
+          tags: prompt.tags,
           isLiked: prompt.isLiked,
           isBookmarked: prompt.isBookmarked,
           likesCount: prompt.likesCount,
@@ -62,7 +68,6 @@ const Home = () => {
         }));
         
         setItems(prevItems => {
-          // Prevent duplicates by checking ids
           const existingIds = new Set(prevItems.map(item => item.id));
           const newItems = formattedItems.filter(item => !existingIds.has(item.id));
           return [...prevItems, ...newItems];
@@ -75,22 +80,8 @@ const Home = () => {
       }
     };
 
-    if (hasMore) {
-      fetchPrompts();
-    }
+    fetchBookmarks();
   }, [page, token, refreshKey]);
-
-  // Listen for new prompt creation and refresh the list
-  useEffect(() => {
-    const handlePromptCreated = () => {
-      setItems([]);
-      setPage(1);
-      setHasMore(true);
-      setRefreshKey(k => k + 1);
-    };
-    window.addEventListener('promptCreated', handlePromptCreated);
-    return () => window.removeEventListener('promptCreated', handlePromptCreated);
-  }, []);
 
   const handleToggleLike = async (id) => {
     if (!token) {
@@ -98,7 +89,7 @@ const Home = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -125,64 +116,80 @@ const Home = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/bookmark`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await res.json();
       
-      setItems(prev => prev.map(item => {
-        if (item.id === id) {
-          return {
-            ...item,
-            isBookmarked: result.bookmarked,
-            bookmarksCount: result.bookmarked ? item.bookmarksCount + 1 : item.bookmarksCount - 1
-          };
-        }
-        return item;
-      }));
+      if (!result.bookmarked) {
+        // If un-bookmarked, remove from the list in Library page
+        setItems(prev => prev.filter(item => item.id !== id));
+        showToast('✅ Removed from Bookmarks');
+      } else {
+        setItems(prev => prev.map(item => {
+          if (item.id === id) {
+            return {
+              ...item,
+              isBookmarked: result.bookmarked,
+              bookmarksCount: result.bookmarked ? item.bookmarksCount + 1 : item.bookmarksCount - 1
+            };
+          }
+          return item;
+        }));
+      }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
     }
   };
 
-  const syncInteraction = (id, interactionType, status) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        if (interactionType === 'like') {
-          return {
-            ...item,
-            isLiked: status,
-            likesCount: status ? item.likesCount + 1 : item.likesCount - 1
-          };
-        } else if (interactionType === 'bookmark') {
-          return {
-            ...item,
-            isBookmarked: status,
-            bookmarksCount: status ? item.bookmarksCount + 1 : item.bookmarksCount - 1
-          };
-        }
-      }
-      return item;
-    }));
-  };
+  if (!token) {
+    return (
+      <div className="page-container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Bookmarks</h2>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem' }}>Please log in to view your saved prompts.</p>
+        <button 
+          className="btn-primary" 
+          onClick={() => setShowLoginModal(true)}
+          style={{ padding: '12px 24px' }}
+        >
+          Log In
+        </button>
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      </div>
+    );
+  }
 
   if (error) return <div className="page-container" style={{ padding: '40px', textAlign: 'center', color: 'red' }}>Error: {error}</div>;
 
   return (
     <div className="page-container" style={{ paddingBottom: '40px' }}>
-      <MasonryGrid 
-        items={items} 
-        onToggleLike={handleToggleLike} 
-        onToggleBookmark={handleToggleBookmark} 
-        onInteractionSync={syncInteraction}
-      />
+      <header style={{ padding: '40px 2rem 20px' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: '700', color: 'var(--on-background)' }}>Bookmarks</h1>
+        <p style={{ color: 'var(--on-surface-variant)', marginTop: '0.5rem' }}>Your collection of saved prompts.</p>
+      </header>
+
+      {items.length === 0 && !loading ? (
+        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+          <p style={{ color: '#888', fontSize: '1.2rem' }}>You haven't bookmarked any prompts yet.</p>
+        </div>
+      ) : (
+        <MasonryGrid 
+          items={items} 
+          onToggleLike={handleToggleLike} 
+          onToggleBookmark={handleToggleBookmark} 
+        />
+      )}
+      
       <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading more...</div>}
-      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>No more prompts to load.</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>}
+      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>End of your bookmarks.</div>}
+      
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <Toast message={toast} />
     </div>
   );
 };
 
-export default Home;
+export default Bookmarks;
+

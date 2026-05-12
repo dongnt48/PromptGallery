@@ -7,17 +7,33 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_IMAGES = 5;
 const AI_MODELS = ['Midjourney', 'DALL-E 3', 'Stable Diffusion XL', 'Flux', 'Leonardo AI', 'Adobe Firefly', 'Other'];
 
-const CreatePromptModal = ({ isOpen, onClose }) => {
+const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) => {
   const { token } = useAuth();
   const { addNotification } = useNotifications();
   const fileInputRef = useRef(null);
 
-  const [content, setContent] = useState('');
-  const [aiModel, setAiModel] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
-  const [tags, setTags] = useState([]);
+  const isEdit = !!prompt;
+
+  // Initialize state directly from prompt (for edit mode) or empty (for create mode)
+  const [content, setContent] = useState(prompt?.prompt || '');
+  const [aiModel, setAiModel] = useState(prompt?.model || '');
+  const [isPublic, setIsPublic] = useState(prompt?.isPublic !== undefined ? prompt.isPublic : true);
+  const [tags, setTags] = useState(() => {
+    if (prompt?.tags) {
+      return prompt.tags.map(t => typeof t === 'string' ? t : t.tag?.name || t.name);
+    }
+    return [];
+  });
   const [tagInput, setTagInput] = useState('');
-  const [images, setImages] = useState([]); // { file, preview }
+  const [images, setImages] = useState(() => {
+    if (prompt?.images && prompt.images.length > 0) {
+      return prompt.images.map(img => ({
+        preview: img.url,
+        isExisting: true
+      }));
+    }
+    return [];
+  });
   const [submitting, setSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState({});
@@ -31,7 +47,7 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
     }
     // Check for duplicate (same name + size + lastModified)
     const isDuplicate = images.some(
-      (img) => img.file.name === file.name && img.file.size === file.size && img.file.lastModified === file.lastModified
+      (img) => img.file && img.file.name === file.name && img.file.size === file.size && img.file.lastModified === file.lastModified
     );
     if (isDuplicate) {
       return `"${file.name}" has already been added`;
@@ -55,6 +71,7 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
         validFiles.push({
           file,
           preview: URL.createObjectURL(file),
+          isExisting: false
         });
       }
     }
@@ -73,7 +90,10 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
 
   const removeImage = (index) => {
     setImages(prev => {
-      URL.revokeObjectURL(prev[index].preview);
+      const img = prev[index];
+      if (!img.isExisting) {
+        URL.revokeObjectURL(img.preview);
+      }
       return prev.filter((_, i) => i !== index);
     });
   };
@@ -138,6 +158,8 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
             message: '🎉 Prompt created successfully!',
             type: 'success',
           });
+          // Signal to all pages that a new prompt was created
+          window.dispatchEvent(new Event('promptCreated'));
           return;
         } else if (data.status === 'failed') {
           addNotification({
@@ -175,41 +197,58 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
     setSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('content', content);
-      formData.append('aiModel', aiModel);
-      formData.append('isPublic', isPublic.toString());
-      formData.append('tags', JSON.stringify(tags));
-
-      images.forEach(img => {
-        formData.append('images', img.file);
-      });
-
-      const res = await fetch('http://localhost:3000/prompts', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
-      });
-
-      const result = await res.json();
-
-      if (result.jobId) {
-        // Start polling for completion
-        pollJobStatus(result.jobId);
-
-        // Close modal and reset
-        resetForm();
-        onClose();
-
-        // Show immediate feedback (toast will be shown by the parent via notification)
-        addNotification({
-          message: '⏳ Creating your prompt...',
-          type: 'info',
+      if (isEdit) {
+        // Handle update
+        const res = await fetch(`http://localhost:3000/prompts/${prompt.id}`, {
+          method: 'PATCH',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content,
+            aiModel,
+            isPublic,
+            tags
+          }),
         });
+
+        if (!res.ok) throw new Error('Failed to update prompt');
+        
+        const updatedData = await res.json();
+        if (onUpdate) onUpdate(updatedData);
+        addNotification({ message: '✅ Prompt updated successfully', type: 'success' });
+        onClose();
+      } else {
+        // Handle create
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('aiModel', aiModel);
+        formData.append('isPublic', isPublic.toString());
+        formData.append('tags', JSON.stringify(tags));
+
+        images.forEach(img => {
+          if (img.file) formData.append('images', img.file);
+        });
+
+        const res = await fetch('http://localhost:3000/prompts', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+
+        const result = await res.json();
+
+        if (result.jobId) {
+          pollJobStatus(result.jobId);
+          resetForm();
+          onClose();
+          addNotification({ message: '⏳ Creating your prompt...', type: 'info' });
+        }
       }
     } catch (error) {
       console.error('Submit error:', error);
-      setErrors({ submit: 'Failed to submit. Please try again.' });
+      setErrors({ submit: `Failed to ${isEdit ? 'update' : 'submit'}. Please try again.` });
     } finally {
       setSubmitting(false);
     }
@@ -221,13 +260,15 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
     setIsPublic(true);
     setTags([]);
     setTagInput('');
-    images.forEach(img => URL.revokeObjectURL(img.preview));
+    images.forEach(img => {
+      if (!img.isExisting) URL.revokeObjectURL(img.preview);
+    });
     setImages([]);
     setErrors({});
   };
 
   const handleClose = () => {
-    resetForm();
+    if (!isEdit) resetForm();
     onClose();
   };
 
@@ -238,7 +279,7 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
       <div className="create-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="create-modal-header">
-          <h2>Create New Prompt</h2>
+          <h2>{isEdit ? 'Edit Prompt' : 'Create New Prompt'}</h2>
           <button className="modal-close-btn" onClick={handleClose}>
             <X size={20} />
           </button>
@@ -296,8 +337,10 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
           {/* Image Upload */}
           <div className="create-field">
             <label className="create-label">
-              Images <span className="required">*</span>
-              <span className="label-hint">{images.length}/{MAX_IMAGES} — First image will be the cover</span>
+              Images {!isEdit && <span className="required">*</span>}
+              <span className="label-hint">
+                {isEdit ? 'Existing images associated with this prompt' : `${images.length}/${MAX_IMAGES} — First image will be the cover`}
+              </span>
             </label>
 
             {/* Image Preview Grid */}
@@ -307,15 +350,17 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
                   <div key={idx} className={`upload-preview-item ${idx === 0 ? 'is-cover' : ''}`}>
                     <img src={img.preview} alt={`Upload ${idx + 1}`} />
                     {idx === 0 && <span className="cover-badge">Cover</span>}
-                    <button className="remove-image-btn" onClick={() => removeImage(idx)}>
-                      <Trash2 size={14} />
-                    </button>
+                    {!isEdit && (
+                      <button className="remove-image-btn" onClick={() => removeImage(idx)}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {images.length < MAX_IMAGES && (
+            {!isEdit && images.length < MAX_IMAGES && (
               <div
                 className={`upload-zone ${dragActive ? 'drag-active' : ''} ${errors.images ? 'input-error' : ''}`}
                 onDragEnter={handleDrag}
@@ -337,7 +382,7 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
                 />
               </div>
             )}
-            {errors.images && <span className="field-error">{errors.images}</span>}
+            {!isEdit && errors.images && <span className="field-error">{errors.images}</span>}
           </div>
 
           {/* Tags Input */}
@@ -378,11 +423,11 @@ const CreatePromptModal = ({ isOpen, onClose }) => {
             disabled={submitting}
           >
             {submitting ? (
-              <>Creating...</>
+              <>{isEdit ? 'Saving...' : 'Creating...'}</>
             ) : (
               <>
                 <CheckCircle size={18} />
-                Create Prompt
+                {isEdit ? 'Save Changes' : 'Create Prompt'}
               </>
             )}
           </button>
