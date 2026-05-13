@@ -6,6 +6,10 @@ import Home from './pages/Home';
 import MyPrompts from './pages/MyPrompts';
 import Bookmarks from './pages/Bookmarks';
 import LoginSuccess from './pages/LoginSuccess';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminPrompts from './pages/admin/AdminPrompts';
 import { NotificationProvider } from './context/NotificationContext';
 
 function App() {
@@ -20,6 +24,11 @@ function App() {
               <Route path="/my-prompts" element={<MyPrompts />} />
               <Route path="/bookmarks" element={<Bookmarks />} />
               <Route path="/login-success" element={<LoginSuccess />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="prompts" element={<AdminPrompts />} />
+              </Route>
             </Routes>
           </main>
           <Footer />

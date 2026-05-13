@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Search, Bell, LogOut, Shield } from 'lucide-react';
 import LoginModal from './LoginModal';
 import CreatePromptModal from './CreatePromptModal';
 import { useAuth } from '../context/AuthContext';
@@ -138,6 +138,12 @@ const Navbar = () => {
                       <span className="username">{user.name || user.username}</span>
                       <span className="email">{user.email}</span>
                     </div>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="dropdown-item" style={{ textDecoration: 'none', color: '#7c3aed' }} onClick={() => setIsDropdownOpen(false)}>
+                        <Shield size={16} />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button className="dropdown-item logout" onClick={logout}>
                       <LogOut size={16} />
                       Logout
