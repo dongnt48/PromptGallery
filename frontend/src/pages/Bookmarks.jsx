@@ -3,6 +3,7 @@ import { MasonryGrid } from '../components/MasonryGrid';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
 import Toast, { useToast } from '../components/Toast';
+import { Bookmark, Sparkles, SearchX } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -17,6 +18,7 @@ const Bookmarks = () => {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -77,6 +79,7 @@ const Bookmarks = () => {
         setError(err.message);
       } finally {
         setLoading(false);
+        setInitialLoading(false);
       }
     };
 
@@ -145,51 +148,94 @@ const Bookmarks = () => {
 
   if (!token) {
     return (
-      <div className="page-container" style={{ padding: '80px 20px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Bookmarks</h2>
-        <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem' }}>Please log in to view your saved prompts.</p>
-        <button 
-          className="btn-primary" 
-          onClick={() => setShowLoginModal(true)}
-          style={{ padding: '12px 24px' }}
-        >
-          Log In
-        </button>
+      <div className="profile-page">
+        <div className="profile-login-prompt">
+          <div className="profile-login-icon">
+            <Bookmark size={48} />
+          </div>
+          <h2>Bookmarks</h2>
+          <p>Log in to view your saved prompts collection.</p>
+          <button 
+            className="btn-primary" 
+            onClick={() => setShowLoginModal(true)}
+            style={{ padding: '12px 32px', fontSize: '15px' }}
+          >
+            Log In to Continue
+          </button>
+        </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       </div>
     );
   }
 
-  if (error) return <div className="page-container" style={{ padding: '40px', textAlign: 'center', color: 'red' }}>Error: {error}</div>;
+  if (error) return <div className="profile-page"><div className="profile-error">Error: {error}</div></div>;
 
   return (
-    <div className="page-container" style={{ paddingBottom: '40px' }}>
-      <header style={{ padding: '40px 2rem 20px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '700', color: 'var(--on-background)' }}>Bookmarks</h1>
-        <p style={{ color: 'var(--on-surface-variant)', marginTop: '0.5rem' }}>Your collection of saved prompts.</p>
-      </header>
-
-      {items.length === 0 && !loading ? (
-        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-          <p style={{ color: '#888', fontSize: '1.2rem' }}>You haven't bookmarked any prompts yet.</p>
+    <div className="profile-page">
+      {/* Hero Header */}
+      <div className="profile-hero bookmark-hero">
+        <div className="profile-hero-inner">
+          <div className="profile-hero-left">
+            <div className="bookmark-header-content">
+              <div className="bookmark-icon-wrapper">
+                <Bookmark size={28} />
+              </div>
+              <div>
+                <h1 className="profile-display-name">Bookmarks</h1>
+                <p className="profile-username">Your saved prompts collection</p>
+              </div>
+            </div>
+          </div>
+          <div className="profile-hero-right">
+            <div className="bookmark-count-badge">
+              <span className="bookmark-count-number">{items.length}</span>
+              <span className="bookmark-count-text">saved</span>
+            </div>
+          </div>
         </div>
-      ) : (
-        <MasonryGrid 
-          items={items} 
-          onToggleLike={handleToggleLike} 
-          onToggleBookmark={handleToggleBookmark} 
-        />
-      )}
-      
-      <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>}
-      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>End of your bookmarks.</div>}
-      
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
-      <Toast message={toast} />
+      </div>
+
+      {/* Content */}
+      <div className="profile-content">
+        {initialLoading ? (
+          <div className="profile-loading">
+            <div className="profile-loading-spinner" />
+            <p>Loading your bookmarks...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon">
+              <Bookmark size={56} strokeWidth={1.2} />
+            </div>
+            <h3>No bookmarks yet</h3>
+            <p>Explore prompts and save your favorites — they'll appear here.</p>
+          </div>
+        ) : (
+          <MasonryGrid 
+            items={items} 
+            onToggleLike={handleToggleLike} 
+            onToggleBookmark={handleToggleBookmark} 
+          />
+        )}
+        
+        <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
+        {loading && !initialLoading && (
+          <div className="profile-load-more">
+            <div className="profile-loading-spinner small" />
+            <span>Loading more...</span>
+          </div>
+        )}
+        {!hasMore && items.length > 0 && (
+          <div className="profile-end-marker">
+            <span>You've reached the end</span>
+          </div>
+        )}
+        
+        <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+        <Toast message={toast} />
+      </div>
     </div>
   );
 };
 
 export default Bookmarks;
-

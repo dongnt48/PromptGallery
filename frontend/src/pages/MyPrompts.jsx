@@ -5,6 +5,7 @@ import LoginModal from '../components/LoginModal';
 import CreatePromptModal from '../components/CreatePromptModal';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import Toast, { useToast } from '../components/Toast';
+import { Plus, ImageIcon, Film, LayoutGrid, Lock, Globe, Sparkles } from 'lucide-react';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -19,12 +20,15 @@ const MyPrompts = () => {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [filter, setFilter] = useState('all');
   const { toast, showToast } = useToast();
   const observer = useRef();
 
@@ -81,6 +85,7 @@ const MyPrompts = () => {
         setError(err.message);
       } finally {
         setLoading(false);
+        setInitialLoading(false);
       }
     };
 
@@ -200,49 +205,148 @@ const MyPrompts = () => {
     showToast('✅ Prompt updated successfully');
   };
 
+  // Stats
+  const totalPrompts = items.length;
+  const publicCount = items.filter(i => i.isPublic).length;
+  const privateCount = items.filter(i => !i.isPublic).length;
+  const totalLikes = items.reduce((sum, i) => sum + (i.likesCount || 0), 0);
+
+  const filteredItems = items.filter(item => {
+    if (filter === 'public') return item.isPublic;
+    if (filter === 'private') return !item.isPublic;
+    if (filter === 'liked') return item.isLiked || item.likesCount > 0;
+    return true; // 'all'
+  });
+
   if (!token) {
     return (
-      <div className="page-container" style={{ padding: '80px 20px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>My Prompts</h2>
-        <p style={{ color: 'var(--on-surface-variant)', marginBottom: '2rem' }}>Please log in to view your prompts.</p>
-        <button
-          className="btn-primary"
-          onClick={() => setShowLoginModal(true)}
-          style={{ padding: '12px 24px' }}
-        >
-          Log In
-        </button>
+      <div className="profile-page">
+        <div className="profile-login-prompt">
+          <div className="profile-login-icon">
+            <Sparkles size={48} />
+          </div>
+          <h2>My Prompts</h2>
+          <p>Log in to view and manage your creative prompts.</p>
+          <button
+            className="btn-primary"
+            onClick={() => setShowLoginModal(true)}
+            style={{ padding: '12px 32px', fontSize: '15px' }}
+          >
+            Log In to Continue
+          </button>
+        </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       </div>
     );
   }
 
-  if (error) return <div className="page-container" style={{ padding: '40px', textAlign: 'center', color: 'red' }}>Error: {error}</div>;
+  if (error) return <div className="profile-page"><div className="profile-error">Error: {error}</div></div>;
 
   return (
-    <div className="page-container" style={{ paddingBottom: '40px' }}>
-      <header style={{ padding: '40px 2rem 20px' }}>
-        <h5 style={{ fontSize: '1.5rem', color: 'var(--on-background)' }}>My Prompts</h5>
-        <p style={{ color: 'var(--on-surface-variant)', marginTop: '0.5rem' }}>You have created {items.length} prompts.</p>
-      </header>
-
-      {items.length === 0 && !loading ? (
-        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-          <p style={{ color: '#888', fontSize: '1.2rem' }}>You haven't created any prompts yet.</p>
+    <div className="profile-page">
+      {/* Hero Header */}
+      <div className="profile-hero">
+        <div className="profile-hero-inner">
+          <div className="profile-hero-left">
+            <div className="profile-avatar-section">
+              <img
+                src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.name || user?.username}&background=0ea5e9&color=fff&size=96`}
+                alt={user?.name || user?.username}
+                className="profile-avatar-lg"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.target.src = `https://ui-avatars.com/api/?name=${user?.name || user?.username}&background=0ea5e9&color=fff&size=96`;
+                }}
+              />
+              <div className="profile-user-info">
+                <h1 className="profile-display-name">{user?.name || user?.username}</h1>
+                <p className="profile-username">@{user?.username}</p>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <MasonryGrid
-          items={items}
-          onToggleLike={handleToggleLike}
-          onToggleBookmark={handleToggleBookmark}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-        />
-      )}
 
-      <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>}
-      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>End of your prompts.</div>}
+        {/* Stats Bar */}
+        <div className="profile-stats-bar">
+          <div
+            className={`profile-stat-item clickable ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            <LayoutGrid size={16} />
+            <span className="profile-stat-value">{totalPrompts}</span>
+            <span className="profile-stat-label">Prompts</span>
+          </div>
+          <div className="profile-stat-divider" />
+          <div
+            className={`profile-stat-item clickable ${filter === 'public' ? 'active' : ''}`}
+            onClick={() => setFilter('public')}
+          >
+            <Globe size={16} />
+            <span className="profile-stat-value">{publicCount}</span>
+            <span className="profile-stat-label">Public</span>
+          </div>
+          <div className="profile-stat-divider" />
+          <div
+            className={`profile-stat-item clickable ${filter === 'private' ? 'active' : ''}`}
+            onClick={() => setFilter('private')}
+          >
+            <Lock size={16} />
+            <span className="profile-stat-value">{privateCount}</span>
+            <span className="profile-stat-label">Private</span>
+          </div>
+          <div className="profile-stat-divider" />
+          <div
+            className={`profile-stat-item clickable ${filter === 'liked' ? 'active' : ''}`}
+            onClick={() => setFilter('liked')}
+          >
+            <span className="profile-stat-value" style={{ color: '#ef4444' }}>♥</span>
+            <span className="profile-stat-value">{totalLikes}</span>
+            <span className="profile-stat-label">Total Likes</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="profile-content">
+        {initialLoading ? (
+          <div className="profile-loading">
+            <div className="profile-loading-spinner" />
+            <p>Loading your prompts...</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon">
+              <Sparkles size={56} strokeWidth={1.2} />
+            </div>
+            <h3>No prompts found</h3>
+            <p>We couldn't find any prompts matching the current filter.</p>
+            <button className="profile-create-btn" onClick={() => setFilter('all')} style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
+              <span>Clear Filter</span>
+            </button>
+          </div>
+        ) : (
+          <MasonryGrid
+            items={filteredItems}
+            onToggleLike={handleToggleLike}
+            onToggleBookmark={handleToggleBookmark}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        )}
+
+        <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
+        {loading && !initialLoading && (
+          <div className="profile-load-more">
+            <div className="profile-loading-spinner small" />
+            <span>Loading more...</span>
+          </div>
+        )}
+        {!hasMore && items.length > 0 && (
+          <div className="profile-end-marker">
+            <span>You've reached the end</span>
+          </div>
+        )}
+      </div>
 
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
@@ -255,9 +359,9 @@ const MyPrompts = () => {
       />
 
       <CreatePromptModal
-        key={editingPrompt ? `edit-${editingPrompt.id}` : 'create'}
-        isOpen={!!editingPrompt}
-        onClose={() => setEditingPrompt(null)}
+        key={editingPrompt ? `edit-${editingPrompt.id}` : 'create-my'}
+        isOpen={!!editingPrompt || showCreateModal}
+        onClose={() => { setEditingPrompt(null); setShowCreateModal(false); }}
         prompt={editingPrompt}
         onUpdate={handleUpdate}
       />
