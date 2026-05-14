@@ -239,11 +239,29 @@ const AdminPrompts = () => {
                       </td>
                       <td>
                         {p.images && p.images.length > 0 ? (
-                          <img
-                            src={resolveImageUrl(p.images[0].imageUrl)}
-                            alt=""
-                            className="admin-prompt-thumb"
-                          />
+                          resolveImageUrl(p.images[0].imageUrl)?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                            <video
+                              src={resolveImageUrl(p.images[0].imageUrl)}
+                              className="admin-prompt-thumb"
+                              style={{ objectFit: 'cover' }}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              onTimeUpdate={(e) => {
+                                if (e.target.currentTime >= 3) {
+                                  e.target.currentTime = 0;
+                                  e.target.play().catch(() => {});
+                                }
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={resolveImageUrl(p.images[0].imageUrl)}
+                              alt=""
+                              className="admin-prompt-thumb"
+                            />
+                          )
                         ) : (
                           <div className="admin-prompt-thumb" style={{
                             background: '#f0f0f0',

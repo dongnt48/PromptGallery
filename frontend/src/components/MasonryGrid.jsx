@@ -55,7 +55,24 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete }) => {
   return (
     <div className="prompt-card transition-smooth shadow-soft">
       <div className="prompt-card-image">
-        <img src={item.imageUrl} alt={item.title || "AI Generated Image"} loading="lazy" />
+        {item.imageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+          <video 
+            src={item.imageUrl} 
+            style={{ width: '100%', height: 'auto', display: 'block' }} 
+            autoPlay 
+            muted 
+            loop 
+            playsInline 
+            onTimeUpdate={(e) => {
+              if (e.target.currentTime >= 3) {
+                e.target.currentTime = 0;
+                e.target.play().catch(() => {});
+              }
+            }}
+          />
+        ) : (
+          <img src={item.imageUrl} alt={item.title || "AI Generated Image"} loading="lazy" />
+        )}
       </div>
       <div className="prompt-card-overlay glass">
         <div className="prompt-card-header">

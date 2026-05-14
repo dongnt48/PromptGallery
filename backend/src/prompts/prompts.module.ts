@@ -33,15 +33,18 @@ if (!existsSync(uploadsDir)) {
         },
       }),
       fileFilter: (_req, file, cb) => {
-        const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        const allowedMimes = [
+          'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+          'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+        ];
         if (allowedMimes.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new Error('Only image files (jpeg, png, webp, gif) are allowed'), false);
+          cb(new Error('Only image and video files are allowed'), false);
         }
       },
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB per file
+        fileSize: 50 * 1024 * 1024, // 50MB per file
         files: 5,
       },
     }),

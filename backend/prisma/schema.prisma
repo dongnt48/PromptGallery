@@ -33,6 +33,8 @@ model Prompt {
   negativePrompt String?     @map("negative_prompt")
   aiModel        String?     @map("ai_model") @db.VarChar(50)
   isPublic       Boolean     @default(true) @map("is_public")
+  source         String?     @db.VarChar(255)
+  type           String?     @db.VarChar(50)
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
   isDelete       Boolean     @default(false) @map("is_delete")

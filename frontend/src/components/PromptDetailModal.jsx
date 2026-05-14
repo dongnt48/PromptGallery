@@ -136,11 +136,23 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
           ) : (
             <div className="prompt-split-container modal-layout">
               <div className="prompt-image-pane">
-                <img
-                  src={activeImage}
-                  alt="Main Prompt"
-                  className="prompt-main-image-split"
-                />
+                {activeImage?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                  <video
+                    src={activeImage}
+                    className="prompt-main-image-split"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls
+                  />
+                ) : (
+                  <img
+                    src={activeImage}
+                    alt="Main Prompt"
+                    className="prompt-main-image-split"
+                  />
+                )}
               </div>
               <div className="prompt-info-pane">
                 {/* Author Section at the very top */}
@@ -166,7 +178,16 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
                         className={`variation-thumb-sq ${activeImage === resolveImageUrl(img.imageUrl) ? 'active' : ''}`}
                         onClick={() => setActiveImage(resolveImageUrl(img.imageUrl))}
                       >
-                        <img src={resolveImageUrl(img.imageUrl)} alt={`Variation ${idx + 1}`} />
+                        {resolveImageUrl(img.imageUrl)?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                          <video 
+                            src={resolveImageUrl(img.imageUrl)} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            muted 
+                            playsInline 
+                          />
+                        ) : (
+                          <img src={resolveImageUrl(img.imageUrl)} alt={`Variation ${idx + 1}`} />
+                        )}
                       </div>
                     ))}
                   </div>

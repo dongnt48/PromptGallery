@@ -3,7 +3,7 @@ import { X, Upload, Image as ImageIcon, Tag, Globe, Lock, Plus, Trash2, CheckCir
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 const MAX_IMAGES = 5;
 const AI_MODELS = ['Midjourney', 'DALL-E 3', 'Stable Diffusion XL', 'Flux', 'Leonardo AI', 'Adobe Firefly', 'Other'];
 
@@ -40,10 +40,10 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
 
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return `"${file.name}" is not a valid image. Accepted: JPG, PNG, WebP, GIF`;
+      return `"${file.name}" is not a valid file. Accepted: JPG, PNG, GIF, MP4, WebM`;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      return `"${file.name}" exceeds 10MB limit`;
+    if (file.size > 50 * 1024 * 1024) {
+      return `"${file.name}" exceeds 50MB limit`;
     }
     // Check for duplicate (same name + size + lastModified)
     const isDuplicate = images.some(
@@ -337,9 +337,9 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           {/* Image Upload */}
           <div className="create-field">
             <label className="create-label">
-              Images {!isEdit && <span className="required">*</span>}
+              Media {!isEdit && <span className="required">*</span>}
               <span className="label-hint">
-                {isEdit ? 'Existing images associated with this prompt' : `${images.length}/${MAX_IMAGES} — First image will be the cover`}
+                {isEdit ? 'Existing media associated with this prompt' : `${images.length}/${MAX_IMAGES} — First media will be the cover`}
               </span>
             </label>
 
@@ -348,7 +348,11 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
               <div className="upload-preview-grid">
                 {images.map((img, idx) => (
                   <div key={idx} className={`upload-preview-item ${idx === 0 ? 'is-cover' : ''}`}>
-                    <img src={img.preview} alt={`Upload ${idx + 1}`} />
+                    {img.file?.type?.startsWith('video/') || img.preview?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                      <video src={img.preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop playsInline />
+                    ) : (
+                      <img src={img.preview} alt={`Upload ${idx + 1}`} />
+                    )}
                     {idx === 0 && <span className="cover-badge">Cover</span>}
                     {!isEdit && (
                       <button className="remove-image-btn" onClick={() => removeImage(idx)}>
@@ -370,12 +374,12 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={24} className="upload-icon" />
-                <p className="upload-text">Drag & drop images or <span className="upload-link">browse</span></p>
-                <p className="upload-hint">JPG, PNG, WebP, GIF • Max 10MB each</p>
+                <p className="upload-text">Drag & drop media or <span className="upload-link">browse</span></p>
+                <p className="upload-hint">JPG, PNG, GIF, MP4, WebM • Max 50MB each</p>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/ogg,video/quicktime"
                   multiple
                   onChange={handleFileInput}
                   style={{ display: 'none' }}
