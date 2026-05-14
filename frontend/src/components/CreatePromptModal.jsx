@@ -2,12 +2,14 @@ import React, { useState, useRef, useCallback } from 'react';
 import { X, Upload, Image as ImageIcon, Tag, Globe, Lock, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useTranslation } from 'react-i18next';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 const MAX_IMAGES = 5;
 const AI_MODELS = ['Midjourney', 'DALL-E 3', 'Stable Diffusion XL', 'Flux', 'Leonardo AI', 'Adobe Firefly', 'Other'];
 
 const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) => {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const { addNotification } = useNotifications();
   const fileInputRef = useRef(null);
@@ -185,9 +187,9 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
   const handleSubmit = async () => {
     // Validate
     const newErrors = {};
-    if (!content.trim()) newErrors.content = 'Prompt content is required';
-    if (!aiModel) newErrors.aiModel = 'Please select an AI model';
-    if (images.length === 0) newErrors.images = 'At least 1 image is required';
+    if (!content.trim()) newErrors.content = t('createPrompt.errorContent');
+    if (!aiModel) newErrors.aiModel = t('createPrompt.errorModel');
+    if (images.length === 0) newErrors.images = t('createPrompt.errorImages');
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -248,7 +250,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
       }
     } catch (error) {
       console.error('Submit error:', error);
-      setErrors({ submit: `Failed to ${isEdit ? 'update' : 'submit'}. Please try again.` });
+      setErrors({ submit: isEdit ? t('createPrompt.submitErrorEdit') : t('createPrompt.submitErrorCreate') });
     } finally {
       setSubmitting(false);
     }
@@ -279,7 +281,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
       <div className="create-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="create-modal-header">
-          <h2>{isEdit ? 'Edit Prompt' : 'Create New Prompt'}</h2>
+          <h2>{isEdit ? t('createPrompt.editTitle') : t('createPrompt.createTitle')}</h2>
           <button className="modal-close-btn" onClick={handleClose}>
             <X size={20} />
           </button>
@@ -290,11 +292,11 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           {/* Prompt Input */}
           <div className="create-field">
             <label className="create-label">
-              Prompt Content <span className="required">*</span>
+              {t('createPrompt.contentLabel')} <span className="required">*</span>
             </label>
             <textarea
               className={`create-textarea ${errors.content ? 'input-error' : ''}`}
-              placeholder="Describe your AI-generated image prompt in detail..."
+              placeholder={t('createPrompt.contentPlaceholder')}
               value={content}
               onChange={(e) => { setContent(e.target.value); setErrors(prev => ({ ...prev, content: undefined })); }}
               rows={4}
@@ -306,14 +308,14 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           <div className="create-row">
             <div className="create-field" style={{ flex: 1 }}>
               <label className="create-label">
-                AI Model <span className="required">*</span>
+                {t('createPrompt.modelLabel')} <span className="required">*</span>
               </label>
               <select
                 className={`create-select ${errors.aiModel ? 'input-error' : ''}`}
                 value={aiModel}
                 onChange={(e) => { setAiModel(e.target.value); setErrors(prev => ({ ...prev, aiModel: undefined })); }}
               >
-                <option value="">Select model...</option>
+                <option value="">{t('createPrompt.modelSelect')}</option>
                 {AI_MODELS.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
@@ -322,14 +324,14 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
             </div>
 
             <div className="create-field" style={{ flex: 0 }}>
-              <label className="create-label">Visibility</label>
+              <label className="create-label">{t('createPrompt.visibilityLabel')}</label>
               <button
                 className={`visibility-toggle ${isPublic ? 'public' : 'private'}`}
                 onClick={() => setIsPublic(!isPublic)}
                 type="button"
               >
                 {isPublic ? <Globe size={16} /> : <Lock size={16} />}
-                <span>{isPublic ? 'Public' : 'Private'}</span>
+                <span>{isPublic ? t('createPrompt.public') : t('createPrompt.private')}</span>
               </button>
             </div>
           </div>
@@ -337,9 +339,9 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           {/* Image Upload */}
           <div className="create-field">
             <label className="create-label">
-              Media {!isEdit && <span className="required">*</span>}
+              {t('createPrompt.mediaLabel')} {!isEdit && <span className="required">*</span>}
               <span className="label-hint">
-                {isEdit ? 'Existing media associated with this prompt' : `${images.length}/${MAX_IMAGES} — First media will be the cover`}
+                {isEdit ? t('createPrompt.mediaHintEdit') : t('createPrompt.mediaHintCreate')}
               </span>
             </label>
 
@@ -353,7 +355,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
                     ) : (
                       <img src={img.preview} alt={`Upload ${idx + 1}`} />
                     )}
-                    {idx === 0 && <span className="cover-badge">Cover</span>}
+                    {idx === 0 && <span className="cover-badge">{t('createPrompt.cover')}</span>}
                     {!isEdit && (
                       <button className="remove-image-btn" onClick={() => removeImage(idx)}>
                         <Trash2 size={14} />
@@ -374,8 +376,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={24} className="upload-icon" />
-                <p className="upload-text">Drag & drop media or <span className="upload-link">browse</span></p>
-                <p className="upload-hint">JPG, PNG, GIF, MP4, WebM • Max 50MB each</p>
+                <p className="upload-text">{t('createPrompt.dragDrop')} <span className="upload-link">{t('createPrompt.browse')}</span></p>
+                <p className="upload-hint">{t('createPrompt.uploadHint')}</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -392,8 +394,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           {/* Tags Input */}
           <div className="create-field">
             <label className="create-label">
-              Tags
-              <span className="label-hint">Press Enter or comma to add</span>
+              {t('createPrompt.tagsLabel')}
+              <span className="label-hint">{t('createPrompt.tagsHint')}</span>
             </label>
             <div className="tag-input-container">
               {tags.map((tag, idx) => (
@@ -406,7 +408,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
               ))}
               <input
                 className="tag-input"
-                placeholder={tags.length === 0 ? 'e.g. cyberpunk, portrait, cinematic...' : ''}
+                placeholder={tags.length === 0 ? t('createPrompt.tagsPlaceholder') : ''}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
@@ -419,7 +421,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
         <div className="create-modal-footer">
           {errors.submit && <span className="field-error" style={{ marginRight: 'auto' }}>{errors.submit}</span>}
           <button className="btn-cancel" onClick={handleClose} disabled={submitting}>
-            Cancel
+            {t('createPrompt.cancel')}
           </button>
           <button
             className="btn-create"
@@ -427,11 +429,11 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
             disabled={submitting}
           >
             {submitting ? (
-              <>{isEdit ? 'Saving...' : 'Creating...'}</>
+              <>{isEdit ? t('createPrompt.saving') : t('createPrompt.creating')}</>
             ) : (
               <>
                 <CheckCircle size={18} />
-                {isEdit ? 'Save Changes' : 'Create Prompt'}
+                {isEdit ? t('createPrompt.saveChanges') : t('createPrompt.createPromptBtn')}
               </>
             )}
           </button>

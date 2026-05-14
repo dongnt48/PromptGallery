@@ -1,8 +1,10 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const LoginModal = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { loginWithGoogle } = useAuth();
 
   if (!isOpen) return null;
@@ -21,8 +23,8 @@ const LoginModal = ({ isOpen, onClose }) => {
         </button>
 
         <div className="login-header">
-          <h2>Welcome to Lumina</h2>
-          <p>Join our community of elite AI creators</p>
+          <h2>{t('loginModal.welcome')}</h2>
+          <p>{t('loginModal.subtitle')}</p>
         </div>
 
         <button className="google-login-btn" onClick={handleGoogleLogin}>
@@ -44,12 +46,12 @@ const LoginModal = ({ isOpen, onClose }) => {
               fill="#EA4335"
             />
           </svg>
-          Continue with Google
+          {t('loginModal.continueWithGoogle')}
         </button>
 
         <div className="modal-footer">
-          By continuing, you agree to Lumina's <br />
-          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          {t('loginModal.agreement')} <br />
+          <a href="#">{t('loginModal.terms')}</a> {t('loginModal.and')} <a href="#">{t('loginModal.privacy')}</a>
         </div>
       </div>
     </div>

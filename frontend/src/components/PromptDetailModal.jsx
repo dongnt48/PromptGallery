@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Heart, Copy, Check, Bookmark, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -12,6 +13,7 @@ const resolveImageUrl = (url) => {
 };
 
 const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [promptData, setPromptData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
       document.body.removeChild(textarea);
     }
     setCopied(true);
-    if (showToast) showToast('✅ Copied to clipboard!');
+    if (showToast) showToast('✅ ' + t('promptDetail.copied'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -127,11 +129,11 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
           {loading ? (
             <div className="modal-loader-container">
-              <div className="loader">Loading prompt...</div>
+              <div className="loader">{t('promptDetail.loading')}</div>
             </div>
           ) : !promptData ? (
             <div className="modal-error-container">
-              <div className="error-message">Prompt not found</div>
+              <div className="error-message">{t('promptDetail.notFound')}</div>
             </div>
           ) : (
             <div className="prompt-split-container modal-layout">
@@ -170,7 +172,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Variations */}
                 <section className="info-section">
-                  <h3 className="section-label-minimal">VARIATIONS</h3>
+                  <h3 className="section-label-minimal">{t('promptDetail.variations')}</h3>
                   <div className="variations-row">
                     {promptData.images?.map((img, idx) => (
                       <div
@@ -195,7 +197,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Creative Concept (Prompt) */}
                 <section className="info-section-prompt">
-                  <h3 className="section-label-minimal">CREATIVE CONCEPT</h3>
+                  <h3 className="section-label-minimal">{t('promptDetail.creativeConcept')}</h3>
                   <div className="prompt-text-boxed">
                     {promptData.content}
                   </div>
@@ -205,7 +207,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
                 <div className="interaction-bar-refined">
                   <button className={`btn-copy-black ${copied ? 'btn-copied' : ''}`} onClick={() => copyToClipboard(promptData.content)}>
                     {copied ? <Check size={18} /> : <Copy size={18} />}
-                    <span>{copied ? 'Copied!' : 'Copy Prompt'}</span>
+                    <span>{copied ? t('promptDetail.copiedShort') : t('promptDetail.copyPrompt')}</span>
                   </button>
                   <div className="interaction-stats-row">
                     <div 
@@ -227,7 +229,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Footer Stats */}
                 <footer className="prompt-modal-footer">
-                  <div className="footer-stat">Published 2 days ago</div>
+                  <div className="footer-stat">{t('promptDetail.published')}</div>
                 </footer>
               </div>
             </div>

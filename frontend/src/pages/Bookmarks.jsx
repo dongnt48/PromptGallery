@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
 import Toast, { useToast } from '../components/Toast';
 import { Bookmark, Sparkles, SearchX } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -14,6 +15,7 @@ const resolveImageUrl = (url) => {
 };
 
 const Bookmarks = () => {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -128,7 +130,7 @@ const Bookmarks = () => {
       if (!result.bookmarked) {
         // If un-bookmarked, remove from the list in Library page
         setItems(prev => prev.filter(item => item.id !== id));
-        showToast('✅ Removed from Bookmarks');
+        showToast('✅ ' + t('bookmarks.removedSuccess'));
       } else {
         setItems(prev => prev.map(item => {
           if (item.id === id) {
@@ -153,14 +155,14 @@ const Bookmarks = () => {
           <div className="profile-login-icon">
             <Bookmark size={48} />
           </div>
-          <h2>Bookmarks</h2>
-          <p>Log in to view your saved prompts collection.</p>
+          <h2>{t('bookmarks.title')}</h2>
+          <p>{t('bookmarks.loginToView')}</p>
           <button 
             className="btn-primary" 
             onClick={() => setShowLoginModal(true)}
             style={{ padding: '12px 32px', fontSize: '15px' }}
           >
-            Log In to Continue
+            {t('bookmarks.loginToContinue')}
           </button>
         </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
@@ -168,7 +170,7 @@ const Bookmarks = () => {
     );
   }
 
-  if (error) return <div className="profile-page"><div className="profile-error">Error: {error}</div></div>;
+  if (error) return <div className="profile-page"><div className="profile-error">{t('bookmarks.error')} {error}</div></div>;
 
   return (
     <div className="profile-page">
@@ -181,15 +183,15 @@ const Bookmarks = () => {
                 <Bookmark size={28} />
               </div>
               <div>
-                <h1 className="profile-display-name">Bookmarks</h1>
-                <p className="profile-username">Your saved prompts collection</p>
+                <h1 className="profile-display-name">{t('bookmarks.title')}</h1>
+                <p className="profile-username">{t('bookmarks.subtitle')}</p>
               </div>
             </div>
           </div>
           <div className="profile-hero-right">
             <div className="bookmark-count-badge">
               <span className="bookmark-count-number">{items.length}</span>
-              <span className="bookmark-count-text">saved</span>
+              <span className="bookmark-count-text">{t('bookmarks.savedStat')}</span>
             </div>
           </div>
         </div>
@@ -200,15 +202,15 @@ const Bookmarks = () => {
         {initialLoading ? (
           <div className="profile-loading">
             <div className="profile-loading-spinner" />
-            <p>Loading your bookmarks...</p>
+            <p>{t('bookmarks.loading')}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="profile-empty-state">
             <div className="profile-empty-icon">
               <Bookmark size={56} strokeWidth={1.2} />
             </div>
-            <h3>No bookmarks yet</h3>
-            <p>Explore prompts and save your favorites — they'll appear here.</p>
+            <h3>{t('bookmarks.noBookmarks')}</h3>
+            <p>{t('bookmarks.noBookmarksDesc')}</p>
           </div>
         ) : (
           <MasonryGrid 
@@ -222,12 +224,12 @@ const Bookmarks = () => {
         {loading && !initialLoading && (
           <div className="profile-load-more">
             <div className="profile-loading-spinner small" />
-            <span>Loading more...</span>
+            <span>{t('bookmarks.loadingMore')}</span>
           </div>
         )}
         {!hasMore && items.length > 0 && (
           <div className="profile-end-marker">
-            <span>You've reached the end</span>
+            <span>{t('bookmarks.endReached')}</span>
           </div>
         )}
         

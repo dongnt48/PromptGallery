@@ -6,6 +6,7 @@ import CreatePromptModal from '../components/CreatePromptModal';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import Toast, { useToast } from '../components/Toast';
 import { Plus, ImageIcon, Film, LayoutGrid, Lock, Globe, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -16,6 +17,7 @@ const resolveImageUrl = (url) => {
 };
 
 const MyPrompts = () => {
+  const { t } = useTranslation();
   const { token, user } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -172,14 +174,14 @@ const MyPrompts = () => {
       });
       if (res.ok) {
         setItems(prev => prev.filter(item => item.id !== deleteId));
-        showToast('✅ Prompt deleted successfully');
+        showToast('✅ ' + t('myPrompts.deleteSuccess'));
       } else {
         const err = await res.json();
-        showToast('❌ ' + (err.message || 'Failed to delete prompt'));
+        showToast('❌ ' + (err.message || t('myPrompts.deleteFailed')));
       }
     } catch (error) {
       console.error('Error deleting prompt:', error);
-      showToast('❌ An error occurred while deleting');
+      showToast('❌ ' + t('myPrompts.deleteError'));
     } finally {
       setDeleteId(null);
     }
@@ -202,7 +204,7 @@ const MyPrompts = () => {
       }
       return item;
     }));
-    showToast('✅ Prompt updated successfully');
+    showToast('✅ ' + t('myPrompts.updateSuccess'));
   };
 
   // Stats
@@ -225,14 +227,14 @@ const MyPrompts = () => {
           <div className="profile-login-icon">
             <Sparkles size={48} />
           </div>
-          <h2>My Prompts</h2>
-          <p>Log in to view and manage your creative prompts.</p>
+          <h2>{t('myPrompts.title')}</h2>
+          <p>{t('myPrompts.loginToView')}</p>
           <button
             className="btn-primary"
             onClick={() => setShowLoginModal(true)}
             style={{ padding: '12px 32px', fontSize: '15px' }}
           >
-            Log In to Continue
+            {t('myPrompts.loginToContinue')}
           </button>
         </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
@@ -240,7 +242,7 @@ const MyPrompts = () => {
     );
   }
 
-  if (error) return <div className="profile-page"><div className="profile-error">Error: {error}</div></div>;
+  if (error) return <div className="profile-page"><div className="profile-error">{t('myPrompts.error')} {error}</div></div>;
 
   return (
     <div className="profile-page">
@@ -274,7 +276,7 @@ const MyPrompts = () => {
           >
             <LayoutGrid size={16} />
             <span className="profile-stat-value">{totalPrompts}</span>
-            <span className="profile-stat-label">Prompts</span>
+            <span className="profile-stat-label">{t('myPrompts.promptsStat')}</span>
           </div>
           <div className="profile-stat-divider" />
           <div
@@ -283,7 +285,7 @@ const MyPrompts = () => {
           >
             <Globe size={16} />
             <span className="profile-stat-value">{publicCount}</span>
-            <span className="profile-stat-label">Public</span>
+            <span className="profile-stat-label">{t('myPrompts.publicStat')}</span>
           </div>
           <div className="profile-stat-divider" />
           <div
@@ -292,7 +294,7 @@ const MyPrompts = () => {
           >
             <Lock size={16} />
             <span className="profile-stat-value">{privateCount}</span>
-            <span className="profile-stat-label">Private</span>
+            <span className="profile-stat-label">{t('myPrompts.privateStat')}</span>
           </div>
           <div className="profile-stat-divider" />
           <div
@@ -301,7 +303,7 @@ const MyPrompts = () => {
           >
             <span className="profile-stat-value" style={{ color: '#ef4444' }}>♥</span>
             <span className="profile-stat-value">{totalLikes}</span>
-            <span className="profile-stat-label">Total Likes</span>
+            <span className="profile-stat-label">{t('myPrompts.totalLikesStat')}</span>
           </div>
         </div>
       </div>
@@ -311,17 +313,17 @@ const MyPrompts = () => {
         {initialLoading ? (
           <div className="profile-loading">
             <div className="profile-loading-spinner" />
-            <p>Loading your prompts...</p>
+            <p>{t('myPrompts.loading')}</p>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="profile-empty-state">
             <div className="profile-empty-icon">
               <Sparkles size={56} strokeWidth={1.2} />
             </div>
-            <h3>No prompts found</h3>
-            <p>We couldn't find any prompts matching the current filter.</p>
+            <h3>{t('myPrompts.noPrompts')}</h3>
+            <p>{t('myPrompts.noPromptsDesc')}</p>
             <button className="profile-create-btn" onClick={() => setFilter('all')} style={{ background: 'var(--surface-container-high)', color: 'var(--on-surface)' }}>
-              <span>Clear Filter</span>
+              <span>{t('myPrompts.clearFilter')}</span>
             </button>
           </div>
         ) : (
@@ -338,12 +340,12 @@ const MyPrompts = () => {
         {loading && !initialLoading && (
           <div className="profile-load-more">
             <div className="profile-loading-spinner small" />
-            <span>Loading more...</span>
+            <span>{t('myPrompts.loadingMore')}</span>
           </div>
         )}
         {!hasMore && items.length > 0 && (
           <div className="profile-end-marker">
-            <span>You've reached the end</span>
+            <span>{t('myPrompts.endReached')}</span>
           </div>
         )}
       </div>
@@ -354,8 +356,8 @@ const MyPrompts = () => {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Delete Prompt"
-        message="Are you sure you want to delete this prompt? This action cannot be undone."
+        title={t('myPrompts.deleteTitle')}
+        message={t('myPrompts.deleteConfirm')}
       />
 
       <CreatePromptModal

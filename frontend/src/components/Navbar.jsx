@@ -5,8 +5,10 @@ import LoginModal from './LoginModal';
 import CreatePromptModal from './CreatePromptModal';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = () => {
+  const { t, i18n } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -57,6 +59,11 @@ const Navbar = () => {
     return `${Math.floor(hours / 24)}d ago`;
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'vi' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
     <>
       <nav className="navbar">
@@ -66,16 +73,25 @@ const Navbar = () => {
               Lumina
             </Link>
             <div className="navbar-links">
-              <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>Explore</Link>
-              <Link to="/my-prompts" className={`nav-link ${location.pathname === '/my-prompts' ? 'active' : ''}`}>My Prompts</Link>
-              <Link to="/bookmarks" className={`nav-link ${location.pathname === '/bookmarks' ? 'active' : ''}`}>Bookmarks</Link>
+              <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>{t('navbar.explore')}</Link>
+              <Link to="/my-prompts" className={`nav-link ${location.pathname === '/my-prompts' ? 'active' : ''}`}>{t('navbar.myPrompts')}</Link>
+              <Link to="/bookmarks" className={`nav-link ${location.pathname === '/bookmarks' ? 'active' : ''}`}>{t('navbar.bookmarks')}</Link>
             </div>
           </div>
 
           <div className="navbar-actions">
+            <button 
+              className="icon-btn lang-toggle" 
+              onClick={toggleLanguage}
+              title={i18n.language === 'en' ? 'Switch to Vietnamese' : 'Switch to English'}
+              style={{ fontSize: '14px', fontWeight: 'bold' }}
+            >
+              {i18n.language === 'en' ? 'VI' : 'EN'}
+            </button>
+
             <div className="navbar-search">
               <Search size={18} color="var(--outline-variant)" />
-              <input type="text" placeholder="Search prompts..." />
+              <input type="text" placeholder={t('navbar.search')} />
             </div>
 
             {/* Notification Bell */}
@@ -90,10 +106,10 @@ const Navbar = () => {
               {isNotifOpen && (
                 <div className="notif-dropdown">
                   <div className="notif-dropdown-header">
-                    <h4>Notifications</h4>
+                    <h4>{t('navbar.notifications')}</h4>
                     {notifications.length > 0 && (
                       <button className="notif-clear" onClick={() => { markAllRead(); }}>
-                        Mark all read
+                        {t('navbar.markAllRead')}
                       </button>
                     )}
                   </div>
@@ -101,7 +117,7 @@ const Navbar = () => {
                     {notifications.length === 0 ? (
                       <div className="notif-empty">
                         <Bell size={24} color="var(--outline-variant)" />
-                        <p>No notifications yet</p>
+                        <p>{t('navbar.noNotifications')}</p>
                       </div>
                     ) : (
                       notifications.slice(0, 10).map(n => (
@@ -117,7 +133,7 @@ const Navbar = () => {
             </div>
 
             <button className="btn-primary" onClick={handleCreateClick}>
-              Create
+              {t('navbar.create')}
             </button>
 
             {user ? (
@@ -141,12 +157,12 @@ const Navbar = () => {
                     {user.role === 'admin' && (
                       <Link to="/admin" className="dropdown-item" style={{ textDecoration: 'none', color: '#7c3aed' }} onClick={() => setIsDropdownOpen(false)}>
                         <Shield size={16} />
-                        Admin Panel
+                        {t('navbar.adminPanel')}
                       </Link>
                     )}
                     <button className="dropdown-item logout" onClick={logout}>
                       <LogOut size={16} />
-                      Logout
+                      {t('navbar.logout')}
                     </button>
                   </div>
                 )}
@@ -157,7 +173,7 @@ const Navbar = () => {
                 style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 onClick={() => setIsModalOpen(true)}
               >
-                Login
+                {t('navbar.login')}
               </button>
             )}
           </div>
