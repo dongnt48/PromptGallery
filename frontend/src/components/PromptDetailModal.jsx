@@ -203,6 +203,29 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
                   </div>
                 </section>
 
+                {/* AI Model & Tags */}
+                {(promptData.aiModel || (promptData.tags && promptData.tags.length > 0)) && (
+                  <section className="info-section">
+                    <h3 className="section-label-minimal">AI Model & Tags</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {promptData.aiModel && (
+                        <span className="badge-model" style={{ padding: '8px 16px', background: 'var(--primary, #3b82f6)', color: 'var(--on-primary, #ffffff)', borderRadius: '100px', fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }}></span>
+                          {promptData.aiModel}
+                        </span>
+                      )}
+                      {promptData.tags?.map(promptTag => (
+                        <span key={promptTag.tag?.id} className="badge-tag" style={{ padding: '8px 16px', background: 'var(--surface-variant, #f1f5f9)', color: 'var(--on-surface-variant, #475569)', borderRadius: '100px', fontSize: '13px', fontWeight: 500, border: '1px solid rgba(0,0,0,0.05)', transition: 'all 0.2s ease', cursor: 'default' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--primary, #3b82f6)'; e.currentTarget.style.color = 'var(--primary, #3b82f6)'; e.currentTarget.style.background = '#ffffff'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = 'var(--on-surface-variant, #475569)'; e.currentTarget.style.background = 'var(--surface-variant, #f1f5f9)'; }}
+                        >
+                          #{promptTag.tag?.name}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 {/* Interaction Bar */}
                 <div className="interaction-bar-refined">
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -243,7 +266,6 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Footer Stats */}
                 <footer className="prompt-modal-footer">
-                  <div className="footer-stat">{promptData.aiModel}</div>
                   <div className="footer-stat">{t('promptDetail.published')}</div>
                 </footer>
               </div>

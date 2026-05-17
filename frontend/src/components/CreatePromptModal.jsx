@@ -11,7 +11,7 @@ const AI_MODELS = ['GPT Image 2', "GPT Image 1.5", 'Nano Banana Pro', "Gemini 3"
 const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
-  const { addNotification } = useNotifications();
+  const { addNotification, showGlobalToast } = useNotifications();
   const fileInputRef = useRef(null);
 
   const isEdit = !!prompt;
@@ -276,9 +276,9 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
 
         if (result.jobId) {
           pollJobStatus(result.jobId);
+          showGlobalToast('⏳ Creating your prompt...');
           resetForm();
           onClose();
-          addNotification({ message: '⏳ Creating your prompt...', type: 'info' });
         }
       }
     } catch (error) {

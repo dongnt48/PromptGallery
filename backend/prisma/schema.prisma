@@ -22,6 +22,7 @@ model User {
   bookmarks    Bookmark[]
   likes        Like[]
   prompts      Prompt[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -100,4 +101,17 @@ model Bookmark {
 
   @@id([userId, promptId])
   @@map("bookmarks")
+}
+
+model Notification {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  message   String
+  type      String   @default("info") @db.VarChar(20)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
 }

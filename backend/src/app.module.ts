@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PromptsModule } from './prompts/prompts.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AdminModule } from './admin/admin.module';
     PromptsModule, 
     AuthModule,
     AdminModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
