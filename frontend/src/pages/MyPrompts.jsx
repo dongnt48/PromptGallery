@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MasonryGrid } from '../components/MasonryGrid';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
@@ -32,6 +33,9 @@ const MyPrompts = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const { toast, showToast } = useToast();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get('search') || '';
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
@@ -51,7 +55,11 @@ const MyPrompts = () => {
 
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/prompts/my?page=${page}&limit=10`, {
+        let url = `${API_BASE}/prompts/my?page=${page}&limit=10`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+        const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
@@ -65,6 +73,7 @@ const MyPrompts = () => {
           images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
+          source: prompt.source,
           isPublic: prompt.isPublic,
           tags: prompt.tags,
           isLiked: prompt.isLiked,
@@ -92,7 +101,14 @@ const MyPrompts = () => {
     };
 
     fetchMyPrompts();
-  }, [page, token, refreshKey]);
+  }, [page, token, refreshKey, searchQuery]);
+
+  // Reset page and items when search query changes
+  useEffect(() => {
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, [searchQuery]);
 
   // Listen for new prompt creation and refresh the list
   useEffect(() => {

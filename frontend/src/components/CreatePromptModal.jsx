@@ -1,12 +1,12 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { X, Upload, Image as ImageIcon, Tag, Globe, Lock, Plus, Trash2, CheckCircle } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { X, Upload, Image as ImageIcon, Tag, Globe, Lock, Plus, Trash2, CheckCircle, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTranslation } from 'react-i18next';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 const MAX_IMAGES = 5;
-const AI_MODELS = ['Midjourney', 'DALL-E 3', 'Stable Diffusion XL', 'Flux', 'Leonardo AI', 'Adobe Firefly', 'Other'];
+const AI_MODELS = ['GPT Image 2', "GPT Image 1.5", 'Nano Banana Pro', "Gemini 3", 'Seedream 4.5', 'Seedance 2.0', "Grok Image", 'Other'];
 
 const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) => {
   const { t } = useTranslation();
@@ -19,6 +19,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
   // Initialize state directly from prompt (for edit mode) or empty (for create mode)
   const [content, setContent] = useState(prompt?.prompt || '');
   const [aiModel, setAiModel] = useState(prompt?.model || '');
+  const [source, setSource] = useState(prompt?.source || '');
+  const [type, setType] = useState(prompt?.type || '');
   const [isPublic, setIsPublic] = useState(prompt?.isPublic !== undefined ? prompt.isPublic : true);
   const [tags, setTags] = useState(() => {
     if (prompt?.tags) {
@@ -27,6 +29,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
     return [];
   });
   const [tagInput, setTagInput] = useState('');
+  const [availableTags, setAvailableTags] = useState([]);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [images, setImages] = useState(() => {
     if (prompt?.images && prompt.images.length > 0) {
       return prompt.images.map(img => ({
@@ -39,6 +43,24 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
   const [submitting, setSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTags();
+    }
+  }, [isOpen]);
+
+  const fetchTags = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/prompts/tags/all`);
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableTags(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
 
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -129,15 +151,23 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
   const handleTagKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      const tag = tagInput.trim().replace(',', '');
-      if (tag && !tags.includes(tag) && tags.length < 10) {
-        setTags(prev => [...prev, tag]);
-        setTagInput('');
-      }
     } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
       setTags(prev => prev.slice(0, -1));
     }
   };
+
+  const addTag = (tagName) => {
+    if (!tags.includes(tagName) && tags.length < 10) {
+      setTags(prev => [...prev, tagName]);
+    }
+    setTagInput('');
+    setShowTagDropdown(true);
+  };
+
+  const filteredTags = availableTags.filter(t =>
+    t.name.toLowerCase().includes(tagInput.toLowerCase()) &&
+    !tags.includes(t.name)
+  );
 
   const removeTag = (index) => {
     setTags(prev => prev.filter((_, i) => i !== index));
@@ -188,7 +218,6 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
     // Validate
     const newErrors = {};
     if (!content.trim()) newErrors.content = t('createPrompt.errorContent');
-    if (!aiModel) newErrors.aiModel = t('createPrompt.errorModel');
     if (images.length === 0) newErrors.images = t('createPrompt.errorImages');
 
     if (Object.keys(newErrors).length > 0) {
@@ -203,20 +232,22 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
         // Handle update
         const res = await fetch(`http://localhost:3000/prompts/${prompt.id}`, {
           method: 'PATCH',
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             content,
             aiModel,
+            source,
+            type,
             isPublic,
             tags
           }),
         });
 
         if (!res.ok) throw new Error('Failed to update prompt');
-        
+
         const updatedData = await res.json();
         if (onUpdate) onUpdate(updatedData);
         addNotification({ message: '✅ Prompt updated successfully', type: 'success' });
@@ -226,6 +257,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
         const formData = new FormData();
         formData.append('content', content);
         formData.append('aiModel', aiModel);
+        formData.append('source', source);
+        formData.append('type', type);
         formData.append('isPublic', isPublic.toString());
         formData.append('tags', JSON.stringify(tags));
 
@@ -259,6 +292,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
   const resetForm = () => {
     setContent('');
     setAiModel('');
+    setSource('');
+    setType('');
     setIsPublic(true);
     setTags([]);
     setTagInput('');
@@ -291,9 +326,21 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
         <div className="create-modal-body">
           {/* Prompt Input */}
           <div className="create-field">
-            <label className="create-label">
-              {t('createPrompt.contentLabel')} <span className="required">*</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="create-label" style={{ marginBottom: 0 }}>
+                {t('createPrompt.contentLabel')} <span className="required">*</span>
+              </label>
+
+              <button
+                className={`visibility-toggle ${isPublic ? 'public' : 'private'}`}
+                onClick={() => setIsPublic(!isPublic)}
+                type="button"
+                style={{ padding: '4px 10px', fontSize: '13px' }}
+              >
+                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
+                <span>{isPublic ? t('createPrompt.public') : t('createPrompt.private')}</span>
+              </button>
+            </div>
             <textarea
               className={`create-textarea ${errors.content ? 'input-error' : ''}`}
               placeholder={t('createPrompt.contentPlaceholder')}
@@ -304,37 +351,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
             {errors.content && <span className="field-error">{errors.content}</span>}
           </div>
 
-          {/* AI Model + Visibility Row */}
-          <div className="create-row">
-            <div className="create-field" style={{ flex: 1 }}>
-              <label className="create-label">
-                {t('createPrompt.modelLabel')} <span className="required">*</span>
-              </label>
-              <select
-                className={`create-select ${errors.aiModel ? 'input-error' : ''}`}
-                value={aiModel}
-                onChange={(e) => { setAiModel(e.target.value); setErrors(prev => ({ ...prev, aiModel: undefined })); }}
-              >
-                <option value="">{t('createPrompt.modelSelect')}</option>
-                {AI_MODELS.map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-              {errors.aiModel && <span className="field-error">{errors.aiModel}</span>}
-            </div>
 
-            <div className="create-field" style={{ flex: 0 }}>
-              <label className="create-label">{t('createPrompt.visibilityLabel')}</label>
-              <button
-                className={`visibility-toggle ${isPublic ? 'public' : 'private'}`}
-                onClick={() => setIsPublic(!isPublic)}
-                type="button"
-              >
-                {isPublic ? <Globe size={16} /> : <Lock size={16} />}
-                <span>{isPublic ? t('createPrompt.public') : t('createPrompt.private')}</span>
-              </button>
-            </div>
-          </div>
+
 
           {/* Image Upload */}
           <div className="create-field">
@@ -391,13 +409,57 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
             {!isEdit && errors.images && <span className="field-error">{errors.images}</span>}
           </div>
 
+
+
+          {/* AI Model, Source, Type Row */}
+          <div className="create-row">
+            <div className="create-field" style={{ flex: 1 }}>
+              <label className="create-label">
+                {t('createPrompt.modelLabel')}
+              </label>
+              <select
+                className="create-select"
+                value={aiModel}
+                onChange={(e) => { setAiModel(e.target.value); }}
+              >
+                <option value="">{t('createPrompt.modelSelect')}</option>
+                {AI_MODELS.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="create-field" style={{ flex: 1 }}>
+              <label className="create-label">{t('createPrompt.sourceLabel')}</label>
+              <input
+                type="text"
+                className="create-input"
+                placeholder={t('createPrompt.sourcePlaceholder')}
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+              />
+            </div>
+
+            <div className="create-field" style={{ flex: 1 }}>
+              <label className="create-label">{t('createPrompt.typeLabel')}</label>
+              <input
+                type="text"
+                className="create-input"
+                placeholder={t('createPrompt.typePlaceholder')}
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              />
+            </div>
+          </div>
+
+
           {/* Tags Input */}
           <div className="create-field">
             <label className="create-label">
               {t('createPrompt.tagsLabel')}
               <span className="label-hint">{t('createPrompt.tagsHint')}</span>
             </label>
-            <div className="tag-input-container">
+            <div className="tag-input-container" style={{ position: 'relative' }}>
               {tags.map((tag, idx) => (
                 <span key={idx} className="tag-chip-input">
                   {tag}
@@ -410,9 +472,30 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
                 className="tag-input"
                 placeholder={tags.length === 0 ? t('createPrompt.tagsPlaceholder') : ''}
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={(e) => {
+                  setTagInput(e.target.value);
+                  setShowTagDropdown(true);
+                }}
+                onFocus={() => setShowTagDropdown(true)}
+                onBlur={() => setTimeout(() => setShowTagDropdown(false), 200)}
                 onKeyDown={handleTagKeyDown}
               />
+
+              {/* Tag Dropdown */}
+              {showTagDropdown && filteredTags.length > 0 && (
+                <div className="tag-dropdown" style={{ bottom: '100%', top: 'auto', marginBottom: '4px', marginTop: 0 }}>
+                  {filteredTags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="tag-dropdown-item"
+                      onMouseDown={(e) => { e.preventDefault(); addTag(tag.name); }}
+                    >
+                      <Tag size={14} />
+                      <span>{tag.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

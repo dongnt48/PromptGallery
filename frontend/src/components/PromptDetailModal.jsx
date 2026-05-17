@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Heart, Copy, Check, Bookmark, Eye } from 'lucide-react';
+import { X, Heart, Copy, Check, Bookmark, Eye, Link } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
 import { useTranslation } from 'react-i18next';
@@ -205,10 +205,24 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Interaction Bar */}
                 <div className="interaction-bar-refined">
-                  <button className={`btn-copy-black ${copied ? 'btn-copied' : ''}`} onClick={() => copyToClipboard(promptData.content)}>
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                    <span>{copied ? t('promptDetail.copiedShort') : t('promptDetail.copyPrompt')}</span>
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className={`btn-copy-black ${copied ? 'btn-copied' : ''}`} onClick={() => copyToClipboard(promptData.content)}>
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                      <span>{copied ? t('promptDetail.copiedShort') : t('promptDetail.copyPrompt')}</span>
+                    </button>
+                    {promptData.source && (
+                      <a 
+                        href={promptData.source.startsWith('http') ? promptData.source : `https://${promptData.source}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View source"
+                        className="btn-copy-black"
+                        style={{ padding: '0 12px', background: 'var(--surface-variant)', color: 'var(--on-surface)' }}
+                      >
+                        <Link size={18} />
+                      </a>
+                    )}
+                  </div>
                   <div className="interaction-stats-row">
                     <div 
                       className={`stat-icon-group clickable ${isLiked ? 'active-like' : ''}`} 
@@ -229,6 +243,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Footer Stats */}
                 <footer className="prompt-modal-footer">
+                  <div className="footer-stat">{promptData.aiModel}</div>
                   <div className="footer-stat">{t('promptDetail.published')}</div>
                 </footer>
               </div>

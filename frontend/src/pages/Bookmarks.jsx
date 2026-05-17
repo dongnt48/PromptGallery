@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MasonryGrid } from '../components/MasonryGrid';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from '../components/LoginModal';
@@ -26,6 +27,9 @@ const Bookmarks = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { toast, showToast } = useToast();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get('search') || '';
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
@@ -45,7 +49,11 @@ const Bookmarks = () => {
       
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/prompts/bookmarks?page=${page}&limit=10`, {
+        let url = `${API_BASE}/prompts/bookmarks?page=${page}&limit=10`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+        const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
@@ -59,6 +67,7 @@ const Bookmarks = () => {
           images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
+          source: prompt.source,
           isPublic: prompt.isPublic,
           tags: prompt.tags,
           isLiked: prompt.isLiked,
@@ -86,7 +95,14 @@ const Bookmarks = () => {
     };
 
     fetchBookmarks();
-  }, [page, token, refreshKey]);
+  }, [page, token, refreshKey, searchQuery]);
+
+  // Reset page and items when search query changes
+  useEffect(() => {
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, [searchQuery]);
 
   const handleToggleLike = async (id) => {
     if (!token) {

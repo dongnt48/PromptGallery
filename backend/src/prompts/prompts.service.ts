@@ -14,16 +14,35 @@ export class PromptsService {
 
   constructor(private prisma: PrismaService) {}
 
-  async findAll(page: number = 1, limit: number = 10, userId?: bigint, authorId?: bigint) {
+  async findAll(page: number = 1, limit: number = 10, userId?: bigint, authorId?: bigint, tagSlugs?: string[], aiModel?: string, searchKeyword?: string) {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    const whereClause: any = {
+      isDelete: false,
+      ...(authorId ? { userId: authorId } : {}),
+      ...(aiModel ? { aiModel } : {}),
+    };
+
+    if (searchKeyword && searchKeyword.trim() !== '') {
+      whereClause.content = {
+        contains: searchKeyword.trim()
+      };
+    }
+
+    if (tagSlugs && tagSlugs.length > 0) {
+      whereClause.tags = {
+        some: {
+          tag: {
+            slug: { in: tagSlugs },
+          },
+        },
+      };
+    }
+
     const [items, total] = await Promise.all([
       this.prisma.prompt.findMany({
-        where: {
-          isDelete: false,
-          ...(authorId ? { userId: authorId } : {}),
-        },
+        where: whereClause,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -54,10 +73,7 @@ export class PromptsService {
         },
       }),
       this.prisma.prompt.count({
-        where: {
-          isDelete: false,
-          ...(authorId ? { userId: authorId } : {}),
-        },
+        where: whereClause,
       }),
     ]);
 
@@ -138,13 +154,24 @@ export class PromptsService {
     };
   }
 
-  async findBookmarks(page: number = 1, limit: number = 10, userId: bigint) {
+  async findBookmarks(page: number = 1, limit: number = 10, userId: bigint, searchKeyword?: string) {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    const whereClause: any = { userId, prompt: { isDelete: false } };
+
+    if (searchKeyword && searchKeyword.trim() !== '') {
+      whereClause.prompt = {
+        ...whereClause.prompt,
+        content: {
+          contains: searchKeyword.trim()
+        }
+      };
+    }
+
     const [bookmarks, total] = await Promise.all([
       this.prisma.bookmark.findMany({
-        where: { userId, prompt: { isDelete: false } },
+        where: whereClause,
         skip,
         take,
         include: {
@@ -179,7 +206,7 @@ export class PromptsService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.bookmark.count({
-        where: { userId, prompt: { isDelete: false } },
+        where: whereClause,
       }),
     ]);
 
@@ -203,6 +230,11 @@ export class PromptsService {
     };
   }
 
+  async getAllTags() {
+    return this.prisma.tag.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
 
   async toggleLike(userId: bigint, promptId: bigint) {
     const existing = await this.prisma.like.findUnique({
@@ -269,6 +301,8 @@ export class PromptsService {
       isPublic?: boolean;
       tags?: string[];
       negativePrompt?: string;
+      source?: string;
+      type?: string;
     },
   ) {
     const prompt = await this.prisma.prompt.findUnique({
@@ -292,6 +326,8 @@ export class PromptsService {
           aiModel: data.aiModel,
           isPublic: data.isPublic,
           negativePrompt: data.negativePrompt,
+          source: data.source,
+          type: data.type,
         },
       });
 
@@ -333,6 +369,8 @@ export class PromptsService {
       isPublic: boolean;
       tags: string[];
       negativePrompt?: string;
+      source?: string;
+      type?: string;
     },
     files: Express.Multer.File[],
   ) {
@@ -359,6 +397,8 @@ export class PromptsService {
       isPublic: boolean;
       tags: string[];
       negativePrompt?: string;
+      source?: string;
+      type?: string;
     },
     files: Express.Multer.File[],
   ) {
@@ -382,6 +422,8 @@ export class PromptsService {
             aiModel: body.aiModel,
             isPublic: body.isPublic,
             negativePrompt: body.negativePrompt || null,
+            source: body.source || null,
+            type: body.type || null,
           },
         });
 

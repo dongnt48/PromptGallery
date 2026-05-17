@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Bookmark, Copy, Check, Pencil, Trash2 } from 'lucide-react';
+import { Heart, Bookmark, Copy, Check, Pencil, Trash2, Link } from 'lucide-react';
 import PromptDetailModal from './PromptDetailModal';
 import Toast, { useToast, copyWithToast } from './Toast';
 
@@ -110,10 +110,25 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete }) => {
         <p className="prompt-text body-md">{item.prompt}</p>
         <div className="prompt-meta">
           <span className="label-sm">{item.model}</span>
-          <button className={`btn-icon ${justCopied ? 'btn-copied' : ''}`} onClick={handleCopy}>
-            {justCopied ? <Check size={14} style={{ marginRight: '6px' }} /> : <Copy size={14} style={{ marginRight: '6px' }} />}
-            {justCopied ? 'Copied!' : 'Copy'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {item.source && (
+              <a 
+                href={item.source.startsWith('http') ? item.source : `https://${item.source}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View source"
+                onClick={(e) => e.stopPropagation()}
+                className="btn-icon"
+                style={{ padding: '6px' }}
+              >
+                <Link size={14} />
+              </a>
+            )}
+            <button className={`btn-icon ${justCopied ? 'btn-copied' : ''}`} onClick={handleCopy}>
+              {justCopied ? <Check size={14} style={{ marginRight: '6px' }} /> : <Copy size={14} style={{ marginRight: '6px' }} />}
+              {justCopied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

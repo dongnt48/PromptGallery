@@ -72,8 +72,12 @@
     "createTitle": "Tạo Prompt Mới",
     "contentLabel": "Nội dung Prompt",
     "contentPlaceholder": "Mô tả chi tiết prompt tạo ảnh AI của bạn...",
-    "modelLabel": "Mô hình AI",
+    "modelLabel": "Mô hình AI (Không bắt buộc)",
     "modelSelect": "Chọn mô hình...",
+    "sourceLabel": "Nguồn (Không bắt buộc)",
+    "sourcePlaceholder": "VD: Midjourney Gallery, Twitter...",
+    "typeLabel": "Loại (Không bắt buộc)",
+    "typePlaceholder": "VD: Hình ảnh, Video, Văn bản...",
     "visibilityLabel": "Trạng thái hiển thị",
     "public": "Công khai",
     "private": "Riêng tư",
@@ -97,5 +101,13 @@
     "errorImages": "Yêu cầu ít nhất 1 ảnh/video",
     "submitErrorEdit": "Cập nhật thất bại. Vui lòng thử lại.",
     "submitErrorCreate": "Tạo mới thất bại. Vui lòng thử lại."
+  },
+  "explore": {
+    "all": "Tất cả",
+    "clearFilters": "Xóa bộ lọc",
+    "noResults": "Không tìm thấy prompt nào cho các thẻ đã chọn.",
+    "allModels": "Tất cả Model",
+    "searchResultsFor": "Kết quả tìm kiếm cho",
+    "clearSearch": "Xóa tìm kiếm"
   }
 }

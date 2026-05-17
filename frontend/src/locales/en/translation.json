@@ -72,8 +72,12 @@
     "createTitle": "Create New Prompt",
     "contentLabel": "Prompt Content",
     "contentPlaceholder": "Describe your AI-generated image prompt in detail...",
-    "modelLabel": "AI Model",
+    "modelLabel": "AI Model (Optional)",
     "modelSelect": "Select model...",
+    "sourceLabel": "Source (Optional)",
+    "sourcePlaceholder": "e.g. Midjourney Gallery, Twitter...",
+    "typeLabel": "Type (Optional)",
+    "typePlaceholder": "e.g. Image, Video, Text...",
     "visibilityLabel": "Visibility",
     "public": "Public",
     "private": "Private",
@@ -97,5 +101,13 @@
     "errorImages": "At least 1 image is required",
     "submitErrorEdit": "Failed to update. Please try again.",
     "submitErrorCreate": "Failed to submit. Please try again."
+  },
+  "explore": {
+    "all": "All",
+    "clearFilters": "Clear",
+    "noResults": "No prompts found for the selected tags.",
+    "allModels": "All Models",
+    "searchResultsFor": "Search results for",
+    "clearSearch": "Clear Search"
   }
 }

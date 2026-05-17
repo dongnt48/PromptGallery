@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, Bell, LogOut, Shield } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Bell, LogOut, Shield, Menu, X } from 'lucide-react';
 import LoginModal from './LoginModal';
 import CreatePromptModal from './CreatePromptModal';
 import { useAuth } from '../context/AuthContext';
@@ -12,10 +12,13 @@ const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAllRead } = useNotifications();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -33,6 +36,22 @@ const Navbar = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get('search');
+    setSearchQuery(searchParam || '');
+    setIsMobileMenuOpen(false);
+  }, [location.search, location.pathname]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`${location.pathname}?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate(`${location.pathname}`);
+    }
+  };
 
   const handleCreateClick = () => {
     if (!user) {
@@ -69,10 +88,25 @@ const Navbar = () => {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
+            <button 
+              className="icon-btn mobile-menu-btn" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
             <Link to="/" className="navbar-logo">
               Lumina
             </Link>
-            <div className="navbar-links">
+            <div className={`navbar-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+              <form className="navbar-search mobile-search" onSubmit={handleSearchSubmit}>
+                <Search size={18} color="var(--outline-variant)" />
+                <input 
+                  type="text" 
+                  placeholder={t('navbar.search')} 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </form>
               <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>{t('navbar.explore')}</Link>
               <Link to="/my-prompts" className={`nav-link ${location.pathname === '/my-prompts' ? 'active' : ''}`}>{t('navbar.myPrompts')}</Link>
               <Link to="/bookmarks" className={`nav-link ${location.pathname === '/bookmarks' ? 'active' : ''}`}>{t('navbar.bookmarks')}</Link>
@@ -86,13 +120,18 @@ const Navbar = () => {
               title={i18n.language === 'en' ? 'Switch to Vietnamese' : 'Switch to English'}
               style={{ fontSize: '14px', fontWeight: 'bold' }}
             >
-              {i18n.language === 'en' ? 'VI' : 'EN'}
+              {i18n.language === 'en' ? 'EN' : 'VI'}
             </button>
 
-            <div className="navbar-search">
+            <form className="navbar-search" onSubmit={handleSearchSubmit}>
               <Search size={18} color="var(--outline-variant)" />
-              <input type="text" placeholder={t('navbar.search')} />
-            </div>
+              <input 
+                type="text" 
+                placeholder={t('navbar.search')} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </form>
 
             {/* Notification Bell */}
             <div className="notif-container" ref={notifRef}>

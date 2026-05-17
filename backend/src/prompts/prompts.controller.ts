@@ -32,10 +32,14 @@ export class PromptsController {
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('tags') tags: string,
+    @Query('aiModel') aiModel: string,
+    @Query('search') search: string,
     @Req() req: any,
   ) {
     const userId = this.getUserIdFromRequest(req);
-    return this.promptsService.findAll(page, limit, userId);
+    const tagSlugs = tags ? tags.split(',').filter(t => t.trim()) : undefined;
+    return this.promptsService.findAll(page, limit, userId, undefined, tagSlugs, aiModel || undefined, search || undefined);
   }
 
   @Get('my')
@@ -43,9 +47,10 @@ export class PromptsController {
   async getMyPrompts(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('search') search: string,
     @Req() req: any,
   ) {
-    return this.promptsService.findAll(page, limit, req.user.id, req.user.id);
+    return this.promptsService.findAll(page, limit, req.user.id, req.user.id, undefined, undefined, search);
   }
 
   @Get('bookmarks')
@@ -53,11 +58,16 @@ export class PromptsController {
   async getBookmarks(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('search') search: string,
     @Req() req: any,
   ) {
-    return this.promptsService.findBookmarks(page, limit, req.user.id);
+    return this.promptsService.findBookmarks(page, limit, req.user.id, search);
   }
 
+  @Get('tags/all')
+  async getAllTags() {
+    return this.promptsService.getAllTags();
+  }
 
   @Get('status/:jobId')
   getJobStatus(@Param('jobId') jobId: string) {
@@ -85,10 +95,12 @@ export class PromptsController {
       req.user.id,
       {
         content: body.content,
-        aiModel: body.aiModel || 'Unknown',
+        aiModel: body.aiModel || null,
         isPublic,
         tags,
         negativePrompt: body.negativePrompt || undefined,
+        source: body.source || null,
+        type: body.type || null,
       },
       files || [],
     );
@@ -130,6 +142,8 @@ export class PromptsController {
         isPublic: body.isPublic !== undefined ? (body.isPublic === 'true' || body.isPublic === true) : undefined,
         tags,
         negativePrompt: body.negativePrompt,
+        source: body.source,
+        type: body.type,
       },
     );
   }
