@@ -24,10 +24,15 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const showLoginModalRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
   const observer = useRef();
+
+  useEffect(() => {
+    showLoginModalRef.current = showLoginModal;
+  }, [showLoginModal]);
 
   // Tag & Model filter state
   const [allTags, setAllTags] = useState([]);
@@ -79,6 +84,7 @@ const Home = () => {
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
+        if (showLoginModalRef.current) return;
         setPage(prevPage => prevPage + 1);
       }
     });
@@ -100,11 +106,20 @@ const Home = () => {
           url += `&search=${encodeURIComponent(searchKeyword)}`;
         }
         const response = await fetch(url, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          credentials: 'include'
         });
+        
+        if (response.status === 401) {
+          setShowLoginModal(true);
+          setPage(prev => prev - 1); // Revert page increment so next scroll tries again
+          setLoading(false);
+          return; // Exit early
+        }
+
         if (!response.ok) {
           throw new Error('Failed to fetch prompts');
         }
+        
         const result = await response.json();
 
         // Map backend data to MasonryGrid expected format
@@ -164,7 +179,7 @@ const Home = () => {
     try {
       const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
 
@@ -191,7 +206,7 @@ const Home = () => {
     try {
       const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
 

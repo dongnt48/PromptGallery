@@ -11,11 +11,13 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminPrompts from './pages/admin/AdminPrompts';
 import { NotificationProvider } from './context/NotificationContext';
+import FetchInterceptor from './components/FetchInterceptor';
 
 function App() {
   return (
     <Router>
       <NotificationProvider>
+        <FetchInterceptor />
         <div className="app-container">
           <Navbar />
           <main className="main-content">

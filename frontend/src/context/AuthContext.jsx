@@ -4,43 +4,45 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await fetch('http://localhost:3000/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
     setUser(null);
-    setToken(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
   }, []);
 
   useEffect(() => {
     const verifySession = async () => {
-      const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
+      try {
+        const response = await fetch('http://localhost:3000/auth/me', {
+          credentials: 'include'
+        });
 
-      if (savedToken && savedUser) {
-        try {
-          const response = await fetch('http://localhost:3000/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${savedToken}`
-            }
-          });
-
-          if (response.ok) {
-            const freshUser = await response.json();
+        if (response.ok) {
+          const freshUser = await response.json();
+          if (freshUser) {
             setUser(freshUser);
-            setToken(savedToken);
             localStorage.setItem('user', JSON.stringify(freshUser));
           } else {
-            // Token invalid or user deleted
-            logout();
+            setUser(null);
+            localStorage.removeItem('user');
           }
-        } catch (error) {
-          console.error('Session verification failed:', error);
-          setUser(JSON.parse(savedUser));
-          setToken(savedToken);
+        } else {
+          setUser(null);
+          localStorage.removeItem('user');
         }
+      } catch (error) {
+        console.error('Session verification failed:', error);
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) setUser(JSON.parse(savedUser));
       }
       setLoading(false);
     };
@@ -48,10 +50,8 @@ export const AuthProvider = ({ children }) => {
     verifySession();
   }, [logout]);
 
-  const loginWithToken = useCallback((newToken, userData) => {
-    localStorage.setItem('token', newToken);
+  const loginWithUser = useCallback((userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
-    setToken(newToken);
     setUser(userData);
   }, []);
 
@@ -61,12 +61,11 @@ export const AuthProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     user,
-    token,
     loading,
     loginWithGoogle,
-    loginWithToken,
+    loginWithUser,
     logout
-  }), [user, token, loading, loginWithGoogle, loginWithToken, logout]);
+  }), [user, loading, loginWithGoogle, loginWithUser, logout]);
 
   return (
     <AuthContext.Provider value={value}>

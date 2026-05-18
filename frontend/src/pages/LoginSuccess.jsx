@@ -5,17 +5,16 @@ import { useAuth } from '../context/AuthContext';
 const LoginSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loginWithToken } = useAuth();
+  const { loginWithUser } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const token = params.get('token');
     const userStr = params.get('user');
 
-    if (token && userStr) {
+    if (userStr) {
       try {
         const userData = JSON.parse(userStr);
-        loginWithToken(token, userData);
+        loginWithUser(userData);
         
         // Brief delay to ensure state persists before navigation
         const timer = setTimeout(() => {
@@ -29,7 +28,7 @@ const LoginSuccess = () => {
     } else {
       navigate('/');
     }
-  }, [location, loginWithToken, navigate]);
+  }, [location, loginWithUser, navigate]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>

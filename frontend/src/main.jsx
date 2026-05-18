@@ -6,9 +6,7 @@ import { AuthProvider } from './context/AuthContext'
 import './i18n'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </StrictMode>,
+  <AuthProvider>
+    <App />
+  </AuthProvider>
 )

@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Query, Param, Req, Body,
-  ParseIntPipe, DefaultValuePipe, UseGuards, UseInterceptors, UploadedFiles,
+  ParseIntPipe, DefaultValuePipe, UseGuards, UseInterceptors, UploadedFiles, UnauthorizedException
 } from '@nestjs/common';
 import { PromptsService } from './prompts.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -12,14 +12,13 @@ export class PromptsController {
   constructor(
     private readonly promptsService: PromptsService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private getUserIdFromRequest(req: any): bigint | undefined {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = req.cookies?.Authentication;
+    if (!token) {
       return undefined;
     }
-    const token = authHeader.split(' ')[1];
     try {
       const payload = this.jwtService.verify(token);
       return BigInt(payload.sub);
@@ -38,6 +37,11 @@ export class PromptsController {
     @Req() req: any,
   ) {
     const userId = this.getUserIdFromRequest(req);
+
+    if (!userId && page > 2) {
+      throw new UnauthorizedException('You must be logged in to view more prompts.');
+    }
+
     const tagSlugs = tags ? tags.split(',').filter(t => t.trim()) : undefined;
     return this.promptsService.findAll(page, limit, userId, undefined, tagSlugs, aiModel || undefined, search || undefined);
   }
@@ -132,7 +136,7 @@ export class PromptsController {
     @Req() req: any,
   ) {
     const tags = body.tags ? (typeof body.tags === 'string' ? JSON.parse(body.tags) : body.tags) : undefined;
-    
+
     return this.promptsService.updatePrompt(
       req.user.id,
       BigInt(id),

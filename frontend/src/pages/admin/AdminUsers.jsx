@@ -21,7 +21,7 @@ const AdminUsers = () => {
       const params = new URLSearchParams({ page: p, limit: 15 });
       if (s) params.append('search', s);
       const res = await fetch(`${API_BASE}/admin/users?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const data = await res.json();
       setUsers(data.data);
@@ -54,10 +54,8 @@ const AdminUsers = () => {
     try {
       await fetch(`${API_BASE}/admin/users/${userId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })
       });
       fetchUsers(page, search);
@@ -70,10 +68,8 @@ const AdminUsers = () => {
     try {
       await fetch(`${API_BASE}/admin/users/${userId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ isDelete: !isDelete })
       });
       fetchUsers(page, search);
@@ -102,10 +98,8 @@ const AdminUsers = () => {
     try {
       await fetch(`${API_BASE}/admin/users/bulk`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds, isDelete: true })
       });
       setSelectedIds([]);

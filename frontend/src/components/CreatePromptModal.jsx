@@ -181,7 +181,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
       attempts++;
       try {
         const res = await fetch(`http://localhost:3000/prompts/status/${jobId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include',
         });
         const data = await res.json();
 
@@ -232,10 +232,8 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
         // Handle update
         const res = await fetch(`http://localhost:3000/prompts/${prompt.id}`, {
           method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          credentials: 'include', headers: {
+            'Content-Type': 'application/json' },
           body: JSON.stringify({
             content,
             aiModel,
@@ -268,7 +266,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
 
         const res = await fetch('http://localhost:3000/prompts', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include',
           body: formData,
         });
 

@@ -54,7 +54,7 @@ const Bookmarks = () => {
           url += `&search=${encodeURIComponent(searchQuery)}`;
         }
         const response = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          credentials: 'include'
         });
         if (!response.ok) {
           throw new Error('Failed to fetch bookmarked prompts');
@@ -112,7 +112,7 @@ const Bookmarks = () => {
     try {
       const res = await fetch(`${API_BASE}/prompts/${id}/like`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
       
@@ -139,7 +139,7 @@ const Bookmarks = () => {
     try {
       const res = await fetch(`${API_BASE}/prompts/${id}/bookmark`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
       

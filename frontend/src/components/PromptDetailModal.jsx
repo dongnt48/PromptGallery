@@ -32,7 +32,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
       setLoading(true);
       try {
         const response = await fetch(`http://localhost:3000/prompts/${id}`, {
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          credentials: 'include'
         });
         const data = await response.json();
         setPromptData(data);
@@ -79,7 +79,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
     try {
       const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
       setIsLiked(result.liked);
@@ -102,7 +102,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
     try {
       const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const result = await res.json();
       setIsBookmarked(result.bookmarked);

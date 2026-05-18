@@ -23,7 +23,7 @@ const AdminPrompts = () => {
       const params = new URLSearchParams({ page: p, limit: 15 });
       if (s) params.append('search', s);
       const res = await fetch(`${API_BASE}/admin/prompts?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const data = await res.json();
       setPrompts(data.data);
@@ -55,10 +55,8 @@ const AdminPrompts = () => {
     try {
       await fetch(`${API_BASE}/admin/prompts/${promptId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ isPublic: !isPublic })
       });
       fetchPrompts(page, search);
@@ -71,10 +69,8 @@ const AdminPrompts = () => {
     try {
       await fetch(`${API_BASE}/admin/prompts/${promptId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ isDelete: !isDelete })
       });
       fetchPrompts(page, search);
@@ -88,7 +84,7 @@ const AdminPrompts = () => {
     try {
       await fetch(`${API_BASE}/admin/prompts/${promptId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       fetchPrompts(page, search);
     } catch (err) {
@@ -116,10 +112,8 @@ const AdminPrompts = () => {
     try {
       await fetch(`${API_BASE}/admin/prompts/bulk`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds, isDelete: true })
       });
       setSelectedIds([]);
@@ -135,10 +129,8 @@ const AdminPrompts = () => {
     try {
       await fetch(`${API_BASE}/admin/prompts/bulk`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include', headers: {
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds })
       });
       setSelectedIds([]);

@@ -23,7 +23,7 @@ export const NotificationProvider = ({ children }) => {
     const fetchNotifications = async () => {
       try {
         const res = await fetch('http://localhost:3000/notifications', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
@@ -66,10 +66,8 @@ export const NotificationProvider = ({ children }) => {
       try {
         const res = await fetch('http://localhost:3000/notifications', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          credentials: 'include', headers: {
+            'Content-Type': 'application/json' },
           body: JSON.stringify({ message: notification.message, type: notification.type })
         });
         if (res.ok) {
@@ -91,7 +89,7 @@ export const NotificationProvider = ({ children }) => {
       try {
         await fetch('http://localhost:3000/notifications/read-all', {
           method: 'PATCH',
-          headers: { 'Authorization': `Bearer ${token}` }
+          credentials: 'include'
         });
       } catch (error) {
         console.error('Failed to mark notifications as read in DB', error);

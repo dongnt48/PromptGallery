@@ -115,3 +115,14 @@ model Notification {
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
 }
+
+model RateLimitLog {
+  id        BigInt   @id @default(autoincrement())
+  ip        String   @db.VarChar(50)
+  userId    String?  @map("user_id") @db.VarChar(50)
+  path      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ip, createdAt(sort: Desc)])
+  @@map("rate_limit_logs")
+}
