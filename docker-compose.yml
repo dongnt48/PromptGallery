@@ -28,7 +28,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./backend/.env
+      - .env
     environment:
       # Override the DATABASE_URL in .env to use the internal docker network hostname 'db'
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-123456}@db:5432/${POSTGRES_DB:-prompt_gallery}?schema=public
