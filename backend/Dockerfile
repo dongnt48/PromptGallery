@@ -7,10 +7,14 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
 RUN npm ci
 
 COPY . .
+
+# Prisma 7 needs a dummy DATABASE_URL at build time for generate (not used for actual connection)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -30,6 +34,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 # Make sure uploads directory exists
 RUN mkdir -p /app/uploads
