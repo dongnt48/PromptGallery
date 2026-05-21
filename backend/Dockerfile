@@ -42,4 +42,4 @@ RUN mkdir -p /app/uploads
 EXPOSE 3000
 
 # Deploy migrations and start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
