@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as Ffmpeg from 'fluent-ffmpeg';
+import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import * as path from 'path';
+
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export interface JobData {
   status: 'queued' | 'processing' | 'completed' | 'failed';
@@ -21,23 +27,37 @@ export class PromptsService {
     const whereClause: any = {
       isDelete: false,
       ...(authorId ? { userId: authorId } : {}),
-      ...(aiModel ? { aiModel } : {}),
     };
 
+    if (aiModel) {
+      if (aiModel === 'Other') {
+        whereClause.aiModel = null;
+      } else {
+        whereClause.aiModel = aiModel;
+      }
+    }
+
+    const AND_conditions: any[] = [];
+
     if (searchKeyword && searchKeyword.trim() !== '') {
-      whereClause.content = {
-        contains: searchKeyword.trim()
-      };
+      AND_conditions.push({
+        OR: [
+          { content: { contains: searchKeyword.trim(), mode: 'insensitive' } },
+          { tags: { some: { tag: { name: { contains: searchKeyword.trim(), mode: 'insensitive' } } } } }
+        ]
+      });
     }
 
     if (tagSlugs && tagSlugs.length > 0) {
-      whereClause.tags = {
-        some: {
-          tag: {
-            slug: { in: tagSlugs },
-          },
-        },
-      };
+      // Must contain ALL selected tags (AND logic)
+      const tagConditions = tagSlugs.map(slug => ({
+        tags: { some: { tag: { slug } } }
+      }));
+      AND_conditions.push(...tagConditions);
+    }
+
+    if (AND_conditions.length > 0) {
+      whereClause.AND = AND_conditions;
     }
 
     const [items, total] = await Promise.all([
@@ -51,6 +71,7 @@ export class PromptsService {
             select: {
               id: true,
               username: true,
+              name: true,
               avatarUrl: true,
             },
           },
@@ -85,6 +106,22 @@ export class PromptsService {
       isBookmarked: userId ? item.bookmarks.length > 0 : false,
     }));
 
+    let stats = null;
+    if (authorId) {
+      // Calculate real stats for My Prompts
+      const [publicCount, privateCount, likesResult] = await Promise.all([
+        this.prisma.prompt.count({ where: { userId: authorId, isDelete: false, isPublic: true } }),
+        this.prisma.prompt.count({ where: { userId: authorId, isDelete: false, isPublic: false } }),
+        this.prisma.like.count({ where: { prompt: { userId: authorId, isDelete: false } } })
+      ]);
+      stats = {
+        totalPrompts: publicCount + privateCount,
+        publicCount,
+        privateCount,
+        totalLikes: likesResult
+      };
+    }
+
     return {
       data: formattedData,
       meta: {
@@ -93,6 +130,7 @@ export class PromptsService {
         limit,
         totalPages: Math.ceil(total / limit),
         hasMore: page * limit < total,
+        ...(stats ? { stats } : {})
       },
     };
   }
@@ -163,9 +201,10 @@ export class PromptsService {
     if (searchKeyword && searchKeyword.trim() !== '') {
       whereClause.prompt = {
         ...whereClause.prompt,
-        content: {
-          contains: searchKeyword.trim()
-        }
+        OR: [
+          { content: { contains: searchKeyword.trim(), mode: 'insensitive' } },
+          { tags: { some: { tag: { name: { contains: searchKeyword.trim(), mode: 'insensitive' } } } } }
+        ]
       };
     }
 
@@ -181,6 +220,7 @@ export class PromptsService {
                 select: {
                   id: true,
                   username: true,
+                  name: true,
                   avatarUrl: true,
                 },
               },
@@ -226,6 +266,9 @@ export class PromptsService {
         limit,
         totalPages: Math.ceil(total / limit),
         hasMore: page * limit < total,
+        stats: {
+          totalBookmarks: total
+        }
       },
     };
   }
@@ -429,11 +472,45 @@ export class PromptsService {
 
         // 2. Create images — first image is cover
         if (files && files.length > 0) {
-          const imageData = files.map((file, index) => ({
-            promptId: newPrompt.id,
-            imageUrl: `/uploads/${file.filename}`,
-            isCover: index === 0,
-          }));
+          const imageData = [];
+          
+          for (let index = 0; index < files.length; index++) {
+            const file = files[index];
+            let thumbnailUrl = null;
+            
+            const relativeDir = path.relative(path.join(process.cwd(), 'uploads'), file.destination).replace(/\\/g, '/');
+            const urlPrefix = relativeDir ? `/uploads/${relativeDir}/` : `/uploads/`;
+            
+            if (file.mimetype.startsWith('video/') || file.filename.match(/\.(mp4|webm|mov)$/i)) {
+              thumbnailUrl = `${urlPrefix}${file.filename}.jpg`;
+              const videoPath = file.path;
+              const thumbPath = file.destination;
+              
+              try {
+                await new Promise((resolve, reject) => {
+                  ffmpeg(videoPath)
+                    .screenshots({
+                      count: 1,
+                      folder: thumbPath,
+                      filename: `${file.filename}.jpg`,
+                      timemarks: ['00:00:00.000']
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+                });
+              } catch (e) {
+                console.error('Failed to generate thumbnail for', file.filename, e);
+                thumbnailUrl = null; // Fallback to null if FFmpeg fails
+              }
+            }
+
+            imageData.push({
+              promptId: newPrompt.id,
+              imageUrl: `${urlPrefix}${file.filename}`,
+              thumbnailUrl,
+              isCover: index === 0,
+            });
+          }
 
           await tx.image.createMany({ data: imageData });
         }

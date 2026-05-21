@@ -25,7 +25,18 @@ if (!existsSync(uploadsDir)) {
     MulterModule.register({
       storage: diskStorage({
         destination: (_req, _file, cb) => {
-          cb(null, uploadsDir);
+          const date = new Date();
+          const year = date.getFullYear().toString();
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
+          const day = date.getDate().toString().padStart(2, '0');
+          const folderName = `${year}${month}${day}`;
+          
+          const targetDir = join(uploadsDir, folderName);
+          if (!existsSync(targetDir)) {
+            mkdirSync(targetDir, { recursive: true });
+          }
+          
+          cb(null, targetDir);
         },
         filename: (_req, file, cb) => {
           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);

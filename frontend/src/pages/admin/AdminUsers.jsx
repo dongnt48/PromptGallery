@@ -3,10 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { Search, Shield, Trash2, RotateCcw } from 'lucide-react';
 import AdminPagination from '../../components/AdminPagination';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const AdminUsers = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 });
   const [search, setSearch] = useState('');
@@ -31,14 +31,14 @@ const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchUsers(page, search);
       setSelectedIds([]); // Clear selection when page or search changes
     }
-  }, [page, token, search, fetchUsers]);
+  }, [page, user, search, fetchUsers]);
 
   const handleSearch = (val) => {
     setSearch(val);

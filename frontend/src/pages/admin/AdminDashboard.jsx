@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Users, FileText, TrendingUp, Heart, Bookmark } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const AdminDashboard = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
@@ -24,10 +24,10 @@ const AdminDashboard = () => {
         setLoading(false);
       }
     };
-    if (token) {
+    if (user) {
       fetchStats();
     }
-  }, [token]);
+  }, [user]);
 
   // Draw chart
   useEffect(() => {

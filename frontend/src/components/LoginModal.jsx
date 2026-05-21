@@ -11,7 +11,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
   const handleGoogleLogin = () => {
     // Redirect to backend auth endpoint
-    const backendUrl = 'http://localhost:3000'; // Replace with env var if possible
+    const backendUrl = import.meta.env.VITE_API_BASE;
     window.location.href = `${backendUrl}/auth/google`;
   };
 

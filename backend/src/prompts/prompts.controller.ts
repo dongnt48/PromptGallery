@@ -38,7 +38,7 @@ export class PromptsController {
   ) {
     const userId = this.getUserIdFromRequest(req);
 
-    if (!userId && page > 2) {
+    if (!userId && page > 3) {
       throw new UnauthorizedException('You must be logged in to view more prompts.');
     }
 

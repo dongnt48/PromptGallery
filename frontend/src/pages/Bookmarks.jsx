@@ -7,7 +7,7 @@ import Toast, { useToast } from '../components/Toast';
 import { Bookmark, Sparkles, SearchX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -17,10 +17,12 @@ const resolveImageUrl = (url) => {
 
 const Bookmarks = () => {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
+  const [totalBookmarks, setTotalBookmarks] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
@@ -39,13 +41,13 @@ const Bookmarks = () => {
       if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => prevPage + 1);
       }
-    });
+    }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
   useEffect(() => {
     const fetchBookmarks = async () => {
-      if (!token) return;
+      if (!user) return;
       
       setLoading(true);
       try {
@@ -56,14 +58,21 @@ const Bookmarks = () => {
         const response = await fetch(url, {
           credentials: 'include'
         });
+        if (response.status === 429) {
+          setError(t('bookmarks.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setLoading(false);
+          setTimeout(() => { setError(null); setRefreshKey(k => k + 1); }, 5000);
+          return;
+        }
         if (!response.ok) {
-          throw new Error('Failed to fetch bookmarked prompts');
+          throw new Error(t('bookmarks.fetchError', 'Không thể tải dữ liệu. Vui lòng thử lại sau.'));
         }
         const result = await response.json();
         
         const formattedItems = result.data.map(prompt => ({
           id: prompt.id,
           imageUrl: prompt.images && prompt.images.length > 0 ? resolveImageUrl(prompt.images[0].imageUrl) : '',
+          thumbnailUrl: prompt.images && prompt.images.length > 0 && prompt.images[0].thumbnailUrl ? resolveImageUrl(prompt.images[0].thumbnailUrl) : null,
           images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
@@ -75,7 +84,7 @@ const Bookmarks = () => {
           likesCount: prompt.likesCount,
           bookmarksCount: prompt.bookmarksCount,
           author: {
-            name: prompt.user.username,
+            name: prompt.user.name || prompt.user.username,
             avatar: prompt.user.avatarUrl
           }
         }));
@@ -86,6 +95,10 @@ const Bookmarks = () => {
           return [...prevItems, ...newItems];
         });
         setHasMore(result.meta.hasMore);
+        if (result.meta.stats) {
+          setTotalBookmarks(result.meta.stats.totalBookmarks);
+        }
+        setIsRendering(true);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -95,7 +108,7 @@ const Bookmarks = () => {
     };
 
     fetchBookmarks();
-  }, [page, token, refreshKey, searchQuery]);
+  }, [page, user, refreshKey, searchQuery]);
 
   // Reset page and items when search query changes
   useEffect(() => {
@@ -105,7 +118,7 @@ const Bookmarks = () => {
   }, [searchQuery]);
 
   const handleToggleLike = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
@@ -132,7 +145,7 @@ const Bookmarks = () => {
   };
 
   const handleToggleBookmark = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
@@ -164,7 +177,7 @@ const Bookmarks = () => {
     }
   };
 
-  if (!token) {
+  if (!user) {
     return (
       <div className="profile-page">
         <div className="profile-login-prompt">
@@ -206,7 +219,7 @@ const Bookmarks = () => {
           </div>
           <div className="profile-hero-right">
             <div className="bookmark-count-badge">
-              <span className="bookmark-count-number">{items.length}</span>
+              <span className="bookmark-count-number">{totalBookmarks}</span>
               <span className="bookmark-count-text">{t('bookmarks.savedStat')}</span>
             </div>
           </div>
@@ -229,21 +242,24 @@ const Bookmarks = () => {
             <p>{t('bookmarks.noBookmarksDesc')}</p>
           </div>
         ) : (
-          <MasonryGrid 
-            items={items} 
-            onToggleLike={handleToggleLike} 
-            onToggleBookmark={handleToggleBookmark} 
-          />
+          <div style={{ overflowX: 'hidden', padding: '0 12px' }}>
+            <MasonryGrid 
+              items={items} 
+              onToggleLike={handleToggleLike} 
+              onToggleBookmark={handleToggleBookmark} 
+              onLayoutComplete={() => setIsRendering(false)}
+            />
+          </div>
         )}
         
         <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-        {loading && !initialLoading && (
+        {(loading || isRendering) && !initialLoading && (
           <div className="profile-load-more">
             <div className="profile-loading-spinner small" />
             <span>{t('bookmarks.loadingMore')}</span>
           </div>
         )}
-        {!hasMore && items.length > 0 && (
+        {!hasMore && items.length > 0 && !(loading || isRendering) && (
           <div className="profile-end-marker">
             <span>{t('bookmarks.endReached')}</span>
           </div>

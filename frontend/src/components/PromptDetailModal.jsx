@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -12,16 +12,16 @@ const resolveImageUrl = (url) => {
   return `${API_BASE}${url}`;
 };
 
-const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
+const PromptDetailModal = ({ id, initialData, onClose, onInteractionSync, showToast }) => {
   const { t } = useTranslation();
-  const { token } = useAuth();
-  const [promptData, setPromptData] = useState(null);
+  const { user } = useAuth();
+  const [promptData, setPromptData] = useState(initialData || null);
   const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [bookmarksCount, setBookmarksCount] = useState(0);
+  const [activeImage, setActiveImage] = useState(initialData?.imageUrl || (initialData?.images?.[0]?.imageUrl ? resolveImageUrl(initialData.images[0].imageUrl) : null));
+  const [isLiked, setIsLiked] = useState(initialData?.isLiked || false);
+  const [isBookmarked, setIsBookmarked] = useState(initialData?.isBookmarked || false);
+  const [likesCount, setLikesCount] = useState(initialData?.likesCount || 0);
+  const [bookmarksCount, setBookmarksCount] = useState(initialData?.bookmarksCount || 0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -31,8 +31,9 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
     const fetchPrompt = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:3000/prompts/${id}`, {
-          credentials: 'include'
+        const response = await fetch(`${API_BASE}/prompts/${id}`, {
+          credentials: 'include',
+          priority: 'high'
         });
         const data = await response.json();
         setPromptData(data);
@@ -51,7 +52,7 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
     };
 
     fetchPrompt();
-  }, [id, token]);
+  }, [id, user]);
 
   const copyToClipboard = async (text) => {
     try {
@@ -67,24 +68,23 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
       document.body.removeChild(textarea);
     }
     setCopied(true);
-    if (showToast) showToast('✅ ' + t('promptDetail.copied'));
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleToggleLike = async () => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/like`, {
         method: 'POST',
         credentials: 'include'
       });
       const result = await res.json();
       setIsLiked(result.liked);
       setLikesCount(prev => result.liked ? prev + 1 : prev - 1);
-      
+
       // Sync with parent list
       if (onInteractionSync) {
         onInteractionSync(id, 'like', result.liked);
@@ -95,19 +95,19 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
   };
 
   const handleToggleBookmark = async () => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/bookmark`, {
         method: 'POST',
         credentials: 'include'
       });
       const result = await res.json();
       setIsBookmarked(result.bookmarked);
       setBookmarksCount(prev => result.bookmarked ? prev + 1 : prev - 1);
-      
+
       // Sync with parent list
       if (onInteractionSync) {
         onInteractionSync(id, 'bookmark', result.bookmarked);
@@ -181,11 +181,11 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
                         onClick={() => setActiveImage(resolveImageUrl(img.imageUrl))}
                       >
                         {resolveImageUrl(img.imageUrl)?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
-                          <video 
-                            src={resolveImageUrl(img.imageUrl)} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                            muted 
-                            playsInline 
+                          <video
+                            src={resolveImageUrl(img.imageUrl)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            muted
+                            playsInline
                           />
                         ) : (
                           <img src={resolveImageUrl(img.imageUrl)} alt={`Variation ${idx + 1}`} />
@@ -197,7 +197,52 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
 
                 {/* Creative Concept (Prompt) */}
                 <section className="info-section-prompt">
-                  <h3 className="section-label-minimal">{t('promptDetail.creativeConcept')}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h3 className="section-label-minimal" style={{ margin: 0 }}>{t('promptDetail.creativeConcept')}</h3>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div style={{ position: 'relative' }}>
+                        {copied && (
+                          <div className="copy-tooltip-above">
+                            {t('promptDetail.copiedShort')}
+                          </div>
+                        )}
+                        <button
+                          className={`prompt-toolbar-btn ${copied ? 'active' : ''}`}
+                          onClick={() => copyToClipboard(promptData.content)}
+                        >
+                          {copied ? <Check size={16} /> : <Copy size={16} />}
+                          <span>{t('promptDetail.copyPrompt')}</span>
+                        </button>
+                      </div>
+                      {promptData.source && (
+                        <a
+                          href={promptData.source.startsWith('http') ? promptData.source : `https://${promptData.source}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View source"
+                          className="prompt-toolbar-btn"
+                        >
+                          <Link size={16} />
+                        </a>
+                      )}
+                      <button
+                        className={`prompt-toolbar-btn ${isLiked ? 'active-like' : ''}`}
+                        onClick={handleToggleLike}
+                        title="Like"
+                      >
+                        <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                        <span>{likesCount}</span>
+                      </button>
+                      <button
+                        className={`prompt-toolbar-btn ${isBookmarked ? 'active-save' : ''}`}
+                        onClick={handleToggleBookmark}
+                        title="Bookmark"
+                      >
+                        <Bookmark size={16} fill={isBookmarked ? "currentColor" : "none"} />
+                        <span>{bookmarksCount}</span>
+                      </button>
+                    </div>
+                  </div>
                   <div className="prompt-text-boxed">
                     {promptData.content}
                   </div>
@@ -226,48 +271,10 @@ const PromptDetailModal = ({ id, onClose, onInteractionSync, showToast }) => {
                   </section>
                 )}
 
-                {/* Interaction Bar */}
-                <div className="interaction-bar-refined">
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className={`btn-copy-black ${copied ? 'btn-copied' : ''}`} onClick={() => copyToClipboard(promptData.content)}>
-                      {copied ? <Check size={18} /> : <Copy size={18} />}
-                      <span>{copied ? t('promptDetail.copiedShort') : t('promptDetail.copyPrompt')}</span>
-                    </button>
-                    {promptData.source && (
-                      <a 
-                        href={promptData.source.startsWith('http') ? promptData.source : `https://${promptData.source}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="View source"
-                        className="btn-copy-black"
-                        style={{ padding: '0 12px', background: 'var(--surface-variant)', color: 'var(--on-surface)' }}
-                      >
-                        <Link size={18} />
-                      </a>
-                    )}
-                  </div>
-                  <div className="interaction-stats-row">
-                    <div 
-                      className={`stat-icon-group clickable ${isLiked ? 'active-like' : ''}`} 
-                      onClick={handleToggleLike}
-                    >
-                      <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
-                      <span className="stat-text">{likesCount}</span>
-                    </div>
-                    <div 
-                      className={`stat-icon-group clickable ${isBookmarked ? 'active-save' : ''}`} 
-                      onClick={handleToggleBookmark}
-                    >
-                      <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} />
-                      <span className="stat-text">{bookmarksCount}</span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Footer Stats */}
-                <footer className="prompt-modal-footer">
+                {/* <footer className="prompt-modal-footer">
                   <div className="footer-stat">{t('promptDetail.published')}</div>
-                </footer>
+                </footer> */}
               </div>
             </div>
           )}

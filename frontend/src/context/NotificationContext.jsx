@@ -4,8 +4,10 @@ import Toast from '../components/Toast';
 
 const NotificationContext = createContext();
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 export const NotificationProvider = ({ children }) => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   
@@ -14,7 +16,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Fetch notifications on mount/token change
   useEffect(() => {
-    if (!token) {
+    if (!user) {
       setNotifications([]);
       setUnreadCount(0);
       return;
@@ -22,7 +24,7 @@ export const NotificationProvider = ({ children }) => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch('http://localhost:3000/notifications', {
+        const res = await fetch(`${API_BASE}/notifications`, {
           credentials: 'include'
         });
         if (res.ok) {
@@ -35,7 +37,7 @@ export const NotificationProvider = ({ children }) => {
       }
     };
     fetchNotifications();
-  }, [token]);
+  }, [user]);
 
   // Show a transient global toast that doesn't save to DB
   const showGlobalToast = useCallback((message, duration = 3000) => {
@@ -62,9 +64,9 @@ export const NotificationProvider = ({ children }) => {
     setNotifications(prev => [newNotif, ...prev]);
     setUnreadCount(prev => prev + 1);
 
-    if (token) {
+    if (user) {
       try {
-        const res = await fetch('http://localhost:3000/notifications', {
+        const res = await fetch(`${API_BASE}/notifications`, {
           method: 'POST',
           credentials: 'include', headers: {
             'Content-Type': 'application/json' },
@@ -79,15 +81,15 @@ export const NotificationProvider = ({ children }) => {
         console.error('Failed to save notification to DB', error);
       }
     }
-  }, [token, showGlobalToast]);
+  }, [user, showGlobalToast]);
 
   const markAllRead = useCallback(async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
 
-    if (token) {
+    if (user) {
       try {
-        await fetch('http://localhost:3000/notifications/read-all', {
+        await fetch(`${API_BASE}/notifications/read-all`, {
           method: 'PATCH',
           credentials: 'include'
         });
@@ -95,7 +97,7 @@ export const NotificationProvider = ({ children }) => {
         console.error('Failed to mark notifications as read in DB', error);
       }
     }
-  }, [token]);
+  }, [user]);
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);

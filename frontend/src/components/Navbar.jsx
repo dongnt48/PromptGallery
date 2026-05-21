@@ -88,21 +88,22 @@ const Navbar = () => {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
-            <button 
-              className="icon-btn mobile-menu-btn" 
+            <button
+              className="icon-btn mobile-menu-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <Link to="/" className="navbar-logo">
-              Lumina
+            <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+              <img src="/modoha_logo_soft.png" alt="MODOHA Icon" style={{ height: '36px', width: '36px', objectFit: 'cover', borderRadius: '8px' }} />
+              <span style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '0.5px', fontFamily: 'var(--font-heading)' }}>MODOHA</span>
             </Link>
             <div className={`navbar-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
               <form className="navbar-search mobile-search" onSubmit={handleSearchSubmit}>
                 <Search size={18} color="var(--outline-variant)" />
-                <input 
-                  type="text" 
-                  placeholder={t('navbar.search')} 
+                <input
+                  type="text"
+                  placeholder={t('navbar.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -114,8 +115,8 @@ const Navbar = () => {
           </div>
 
           <div className="navbar-actions">
-            <button 
-              className="icon-btn lang-toggle" 
+            <button
+              className="icon-btn lang-toggle"
               onClick={toggleLanguage}
               title={i18n.language === 'en' ? 'Switch to Vietnamese' : 'Switch to English'}
               style={{ fontSize: '14px', fontWeight: 'bold' }}
@@ -125,9 +126,9 @@ const Navbar = () => {
 
             <form className="navbar-search" onSubmit={handleSearchSubmit}>
               <Search size={18} color="var(--outline-variant)" />
-              <input 
-                type="text" 
-                placeholder={t('navbar.search')} 
+              <input
+                type="text"
+                placeholder={t('navbar.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

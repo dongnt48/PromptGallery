@@ -87,7 +87,6 @@
 
 html,
 body {
-  overflow-x: hidden;
   width: 100%;
 }
 
@@ -168,6 +167,12 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.video-overlay {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 60%, transparent 100%);
+  border: none;
+  padding-top: 40px !important;
+}
+
 /* Smooth transitions */
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -188,7 +193,6 @@ button {
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--background);
-  overflow-x: hidden;
   width: 100%;
 }
 
@@ -711,6 +715,72 @@ button {
   margin-bottom: 24px;
 }
 
+/* Absolute Masonry Layout (Pinterest style) */
+.masonry-grid-absolute {
+  width: 100%;
+  margin: 0 -12px; /* compensate for item padding */
+}
+
+.grid-sizer, .masonry-item {
+  width: 20%; /* 5 columns */
+  padding: 12px; /* creates 24px gap between cards */
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 24px;
+}
+
+/* Hide image and overlay until loaded, but show card frame immediately */
+.masonry-item:not(.loaded) .prompt-card-image img,
+.masonry-item:not(.loaded) .prompt-card-image video,
+.masonry-item:not(.loaded) .prompt-overlay {
+  opacity: 0;
+}
+
+.masonry-item .prompt-card-image img,
+.masonry-item .prompt-card-image video,
+.masonry-item .prompt-overlay {
+  transition: opacity 0.5s ease;
+}
+
+/* Add shimmer skeleton effect to image placeholder */
+.masonry-item:not(.loaded) .prompt-card-image {
+  background: linear-gradient(90deg, var(--surface-container-high) 25%, var(--surface-container-highest) 50%, var(--surface-container-high) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  min-height: 200px;
+  border-radius: var(--rounded-2xl);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (min-width: 2560px) {
+  .grid-sizer, .masonry-item { width: 16.666%; } /* 6 cols */
+}
+
+@media (max-width: 1599px) {
+  .grid-sizer, .masonry-item { width: 25%; } /* 4 cols */
+}
+
+@media (max-width: 1199px) {
+  .grid-sizer, .masonry-item { width: 33.333%; } /* 3 cols */
+}
+
+@media (max-width: 767px) {
+  .masonry-grid-absolute { margin: 0 -6px; }
+  .grid-sizer, .masonry-item { width: 50%; padding: 6px; } /* 2 cols */
+}
+
+@media (max-width: 479px) {
+  .masonry-grid-absolute { margin: 0 auto; max-width: 400px; }
+  .grid-sizer, .masonry-item { width: 100%; padding: 12px 0; } /* 1 col */
+}
+
+
 /* Prompt Card */
 .prompt-card {
   position: relative;
@@ -726,11 +796,24 @@ button {
   box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 0 4px rgba(0, 0, 0, 0.02);
 }
 
+.prompt-card-image {
+  min-height: 180px;
+  background-color: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .prompt-card-image img {
   width: 100%;
   display: block;
   object-fit: cover;
   transition: transform 0.4s ease;
+  min-height: 180px;
+}
+
+.prompt-card-image video {
+  min-height: 180px;
 }
 
 .prompt-card:hover .prompt-card-image img {
@@ -742,9 +825,10 @@ button {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 60%, transparent 100%);
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   opacity: 0;
 }
 
@@ -755,10 +839,10 @@ button {
 
 @media (max-width: 768px) {
   .prompt-card-overlay {
-    position: relative;
+    position: absolute;
     transform: none;
     opacity: 1;
-    background: #fff;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 60%, transparent 100%);
     padding: 12px;
   }
 
@@ -769,13 +853,6 @@ button {
   .prompt-card:hover .prompt-card-image img {
     transform: none;
   }
-
-  .prompt-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
 }
 
 .prompt-card-header {
@@ -783,12 +860,23 @@ button {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .prompt-author {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
+.prompt-author .author-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .author-avatar {
@@ -796,12 +884,16 @@ button {
   height: 24px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .prompt-actions {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .action-item {
@@ -1234,10 +1326,10 @@ button {
 .prompt-info-pane {
   flex: 4;
   background-color: #ffffff;
-  padding: 48px 64px;
+  padding: 28px 40px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
   overflow-y: auto;
   max-height: calc(100vh - 72px);
 }
@@ -1245,7 +1337,7 @@ button {
 .info-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .section-label {
@@ -1402,11 +1494,91 @@ button {
   color: var(--outline);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .info-section-prompt {
-  margin-bottom: 32px;
+  margin-bottom: 12px;
+}
+
+/* Prompt toolbar buttons (copy, link, like, bookmark) */
+.prompt-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-container-low, #f8fafc);
+  border: 1px solid var(--outline-variant, #e2e8f0);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface-variant, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.prompt-toolbar-btn:hover {
+  background: var(--surface-container, #f1f5f9);
+  border-color: var(--outline, #cbd5e1);
+  color: var(--on-surface, #1e293b);
+}
+
+.prompt-toolbar-btn.active {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.prompt-toolbar-btn.active-like {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #ef4444;
+}
+
+.prompt-toolbar-btn.active-save {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #f59e0b;
+}
+
+/* Copy tooltip above button */
+.copy-tooltip-above {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tooltipFadeIn 0.2s ease;
+  z-index: 10;
+}
+
+.copy-tooltip-above::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .prompt-text-boxed {
@@ -3408,8 +3580,7 @@ button {
   padding: 0 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .tags-scroll-container {
@@ -3419,13 +3590,18 @@ button {
   overflow-x: auto;
   scrollbar-width: none;
   flex: 1;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tags-scroll-container::-webkit-scrollbar {
   display: none;
 }
 
-.model-filter-container {
+.tag-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -3531,7 +3707,6 @@ button {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  margin-left: 4px;
 }
 
 .tag-filter-clear:hover {
@@ -3546,18 +3721,27 @@ button {
 
   .tag-filter-inner {
     padding: 0 12px;
-    gap: 12px;
-    flex-direction: column;
-    align-items: stretch;
+    gap: 8px;
   }
 
-  .model-filter-container {
-    display: flex;
-    justify-content: flex-end;
+  .tags-scroll-container {
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    padding-right: 20px;
   }
 
   .tag-filter-chip {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .tag-filter-clear {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .model-filter-select {
+    padding: 5px 28px 5px 28px;
+    font-size: 11px;
   }
 }

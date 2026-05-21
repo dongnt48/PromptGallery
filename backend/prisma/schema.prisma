@@ -7,22 +7,22 @@ datasource db {
 }
 
 model User {
-  id           BigInt     @id @default(autoincrement())
-  username     String     @unique @db.VarChar(50)
-  email        String     @unique @db.VarChar(255)
-  name         String?    @db.VarChar(100)
-  passwordHash String?    @map("password_hash") @db.VarChar(255)
-  googleId     String?    @unique @map("google_id") @db.VarChar(255)
-  avatarUrl    String?    @map("avatar_url") @db.VarChar(255)
-  role         String     @default("user") @db.VarChar(20)
-  bio          String?
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  isDelete     Boolean    @default(false) @map("is_delete")
-  bookmarks    Bookmark[]
-  likes        Like[]
-  prompts      Prompt[]
+  id            BigInt         @id @default(autoincrement())
+  username      String         @unique @db.VarChar(50)
+  email         String         @unique @db.VarChar(255)
+  name          String?        @db.VarChar(100)
+  passwordHash  String?        @map("password_hash") @db.VarChar(255)
+  googleId      String?        @unique @map("google_id") @db.VarChar(255)
+  avatarUrl     String?        @map("avatar_url") @db.VarChar(255)
+  role          String         @default("user") @db.VarChar(20)
+  bio           String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  isDelete      Boolean        @default(false) @map("is_delete")
+  bookmarks     Bookmark[]
+  likes         Like[]
   notifications Notification[]
+  prompts       Prompt[]
 
   @@map("users")
 }
@@ -34,11 +34,11 @@ model Prompt {
   negativePrompt String?     @map("negative_prompt")
   aiModel        String?     @map("ai_model") @db.VarChar(50)
   isPublic       Boolean     @default(true) @map("is_public")
-  source         String?     @db.VarChar(255)
-  type           String?     @db.VarChar(50)
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
   isDelete       Boolean     @default(false) @map("is_delete")
+  source         String?     @db.VarChar(255)
+  type           String?     @db.VarChar(50)
   bookmarks      Bookmark[]
   images         Image[]
   likes          Like[]
@@ -51,12 +51,13 @@ model Prompt {
 }
 
 model Image {
-  id        BigInt   @id @default(autoincrement())
-  promptId  BigInt   @map("prompt_id")
-  imageUrl  String   @map("image_url") @db.VarChar(255)
-  isCover   Boolean  @default(false) @map("is_cover")
-  createdAt DateTime @default(now()) @map("created_at")
-  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  id           BigInt   @id @default(autoincrement())
+  promptId     BigInt   @map("prompt_id")
+  imageUrl     String   @map("image_url") @db.VarChar(255)
+  thumbnailUrl String?  @map("thumbnail_url") @db.VarChar(255)
+  isCover      Boolean  @default(false) @map("is_cover")
+  createdAt    DateTime @default(now()) @map("created_at")
+  prompt       Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
 
   @@index([promptId, isCover])
   @@map("images")

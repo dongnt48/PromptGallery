@@ -4,10 +4,10 @@ import { Search, FileText, Eye, EyeOff, Trash2, RotateCcw } from 'lucide-react';
 import AdminPagination from '../../components/AdminPagination';
 import PromptDetailModal from '../../components/PromptDetailModal';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const AdminPrompts = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [prompts, setPrompts] = useState([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 });
   const [search, setSearch] = useState('');
@@ -33,14 +33,14 @@ const AdminPrompts = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchPrompts(page, search);
       setSelectedIds([]); // Clear selection when page or search changes
     }
-  }, [page, token, search, fetchPrompts]);
+  }, [page, user, search, fetchPrompts]);
 
   const handleSearch = (val) => {
     setSearch(val);

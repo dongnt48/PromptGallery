@@ -9,7 +9,7 @@ import Toast, { useToast } from '../components/Toast';
 import { Plus, ImageIcon, Film, LayoutGrid, Lock, Globe, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -19,10 +19,12 @@ const resolveImageUrl = (url) => {
 
 const MyPrompts = () => {
   const { t } = useTranslation();
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
+  const [stats, setStats] = useState({ totalPrompts: 0, publicCount: 0, privateCount: 0, totalLikes: 0 });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
@@ -45,13 +47,13 @@ const MyPrompts = () => {
       if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => prevPage + 1);
       }
-    });
+    }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
   useEffect(() => {
     const fetchMyPrompts = async () => {
-      if (!token) return;
+      if (!user) return;
 
       setLoading(true);
       try {
@@ -62,14 +64,21 @@ const MyPrompts = () => {
         const response = await fetch(url, {
           credentials: 'include'
         });
+        if (response.status === 429) {
+          setError(t('myPrompts.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setLoading(false);
+          setTimeout(() => { setError(null); setRefreshKey(k => k + 1); }, 5000);
+          return;
+        }
         if (!response.ok) {
-          throw new Error('Failed to fetch your prompts');
+          throw new Error(t('myPrompts.fetchError', 'Không thể tải dữ liệu. Vui lòng thử lại sau.'));
         }
         const result = await response.json();
 
         const formattedItems = result.data.map(prompt => ({
           id: prompt.id,
           imageUrl: prompt.images && prompt.images.length > 0 ? resolveImageUrl(prompt.images[0].imageUrl) : '',
+          thumbnailUrl: prompt.images && prompt.images.length > 0 && prompt.images[0].thumbnailUrl ? resolveImageUrl(prompt.images[0].thumbnailUrl) : null,
           images: prompt.images ? prompt.images.map(img => ({ ...img, url: resolveImageUrl(img.imageUrl) })) : [],
           prompt: prompt.content,
           model: prompt.aiModel,
@@ -81,7 +90,7 @@ const MyPrompts = () => {
           likesCount: prompt.likesCount,
           bookmarksCount: prompt.bookmarksCount,
           author: {
-            name: prompt.user.username,
+            name: prompt.user.name || prompt.user.username,
             avatar: prompt.user.avatarUrl
           }
         }));
@@ -92,6 +101,10 @@ const MyPrompts = () => {
           return [...prevItems, ...newItems];
         });
         setHasMore(result.meta.hasMore);
+        if (result.meta.stats) {
+          setStats(result.meta.stats);
+        }
+        setIsRendering(true);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -101,7 +114,7 @@ const MyPrompts = () => {
     };
 
     fetchMyPrompts();
-  }, [page, token, refreshKey, searchQuery]);
+  }, [page, user, refreshKey, searchQuery]);
 
   // Reset page and items when search query changes
   useEffect(() => {
@@ -123,7 +136,7 @@ const MyPrompts = () => {
   }, []);
 
   const handleToggleLike = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
@@ -150,7 +163,7 @@ const MyPrompts = () => {
   };
 
   const handleToggleBookmark = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
@@ -223,11 +236,8 @@ const MyPrompts = () => {
     showToast('✅ ' + t('myPrompts.updateSuccess'));
   };
 
-  // Stats
-  const totalPrompts = items.length;
-  const publicCount = items.filter(i => i.isPublic).length;
-  const privateCount = items.filter(i => !i.isPublic).length;
-  const totalLikes = items.reduce((sum, i) => sum + (i.likesCount || 0), 0);
+  // Stats from backend
+  const { totalPrompts, publicCount, privateCount, totalLikes } = stats;
 
   const filteredItems = items.filter(item => {
     if (filter === 'public') return item.isPublic;
@@ -236,7 +246,7 @@ const MyPrompts = () => {
     return true; // 'all'
   });
 
-  if (!token) {
+  if (!user) {
     return (
       <div className="profile-page">
         <div className="profile-login-prompt">
@@ -343,23 +353,26 @@ const MyPrompts = () => {
             </button>
           </div>
         ) : (
-          <MasonryGrid
-            items={filteredItems}
-            onToggleLike={handleToggleLike}
-            onToggleBookmark={handleToggleBookmark}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
+          <div style={{ overflowX: 'hidden', padding: '0 12px' }}>
+            <MasonryGrid
+              items={filteredItems}
+              onToggleLike={handleToggleLike}
+              onToggleBookmark={handleToggleBookmark}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              onLayoutComplete={() => setIsRendering(false)}
+            />
+          </div>
         )}
 
         <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-        {loading && !initialLoading && (
+        {(loading || isRendering) && !initialLoading && (
           <div className="profile-load-more">
             <div className="profile-loading-spinner small" />
             <span>{t('myPrompts.loadingMore')}</span>
           </div>
         )}
-        {!hasMore && items.length > 0 && (
+        {!hasMore && items.length > 0 && !(loading || isRendering) && (
           <div className="profile-end-marker">
             <span>{t('myPrompts.endReached')}</span>
           </div>

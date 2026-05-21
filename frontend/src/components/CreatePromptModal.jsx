@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTranslation } from 'react-i18next';
 
+const API_BASE = import.meta.env.VITE_API_BASE;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 const MAX_IMAGES = 5;
-const AI_MODELS = ['GPT Image 2', "GPT Image 1.5", 'Nano Banana Pro', "Gemini 3", 'Seedream 4.5', 'Seedance 2.0', "Grok Image", 'Other'];
+const AI_MODELS = ['GPT Image', "Nanobanana", 'Seedance', "Midjourney"];
 
 const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) => {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const { addNotification, showGlobalToast } = useNotifications();
   const fileInputRef = useRef(null);
 
@@ -52,7 +53,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/prompts/tags/all`);
+      const res = await fetch(`${API_BASE}/prompts/tags/all`);
       if (res.ok) {
         const data = await res.json();
         setAvailableTags(data || []);
@@ -180,7 +181,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
     const poll = async () => {
       attempts++;
       try {
-        const res = await fetch(`http://localhost:3000/prompts/status/${jobId}`, {
+        const res = await fetch(`${API_BASE}/prompts/status/${jobId}`, {
           credentials: 'include',
         });
         const data = await res.json();
@@ -230,10 +231,11 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
     try {
       if (isEdit) {
         // Handle update
-        const res = await fetch(`http://localhost:3000/prompts/${prompt.id}`, {
+        const res = await fetch(`${API_BASE}/prompts/${prompt.id}`, {
           method: 'PATCH',
           credentials: 'include', headers: {
-            'Content-Type': 'application/json' },
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             content,
             aiModel,
@@ -264,7 +266,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           if (img.file) formData.append('images', img.file);
         });
 
-        const res = await fetch('http://localhost:3000/prompts', {
+        const res = await fetch(`${API_BASE}/prompts`, {
           method: 'POST',
           credentials: 'include',
           body: formData,
@@ -438,16 +440,6 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
               />
             </div>
 
-            <div className="create-field" style={{ flex: 1 }}>
-              <label className="create-label">{t('createPrompt.typeLabel')}</label>
-              <input
-                type="text"
-                className="create-input"
-                placeholder={t('createPrompt.typePlaceholder')}
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              />
-            </div>
           </div>
 
 
@@ -455,7 +447,6 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
           <div className="create-field">
             <label className="create-label">
               {t('createPrompt.tagsLabel')}
-              <span className="label-hint">{t('createPrompt.tagsHint')}</span>
             </label>
             <div className="tag-input-container" style={{ position: 'relative' }}>
               {tags.map((tag, idx) => (

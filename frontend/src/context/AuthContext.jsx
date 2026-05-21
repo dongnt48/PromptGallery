@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -8,7 +9,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      await fetch('http://localhost:3000/auth/logout', {
+      await fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const verifySession = async () => {
       try {
-        const response = await fetch('http://localhost:3000/auth/me', {
+        const response = await fetch(`${API_BASE}/auth/me`, {
           credentials: 'include'
         });
 
@@ -56,7 +57,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loginWithGoogle = useCallback(() => {
-    window.location.href = 'http://localhost:3000/auth/google';
+    window.location.href = `${API_BASE}/auth/google`;
   }, []);
 
   const value = useMemo(() => ({

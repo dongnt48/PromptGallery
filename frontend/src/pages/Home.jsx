@@ -6,8 +6,8 @@ import { Tag, X, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const API_BASE = 'http://localhost:3000';
-const AI_MODELS = ['GPT Image 2', "GPT Image 1.5", 'Nano Banana Pro', "Gemini 3", 'Seedream 4.5', 'Seedance 2.0', "Grok Image", 'Other'];
+const API_BASE = import.meta.env.VITE_API_BASE;
+const AI_MODELS = ['GPT Image', "Nanobanana", 'Seedance', "Midjourney", "Other"];
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -17,10 +17,11 @@ const resolveImageUrl = (url) => {
 
 const Home = () => {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -87,7 +88,7 @@ const Home = () => {
         if (showLoginModalRef.current) return;
         setPage(prevPage => prevPage + 1);
       }
-    });
+    }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
@@ -95,7 +96,7 @@ const Home = () => {
     const fetchPrompts = async () => {
       setLoading(true);
       try {
-        let url = `${API_BASE}/prompts?page=${page}&limit=15`;
+        let url = `${API_BASE}/prompts?page=${page}&limit=10`;
         if (selectedTags.length > 0) {
           url += `&tags=${selectedTags.join(',')}`;
         }
@@ -108,7 +109,7 @@ const Home = () => {
         const response = await fetch(url, {
           credentials: 'include'
         });
-        
+
         if (response.status === 401) {
           setShowLoginModal(true);
           setPage(prev => prev - 1); // Revert page increment so next scroll tries again
@@ -116,16 +117,28 @@ const Home = () => {
           return; // Exit early
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch prompts');
+        if (response.status === 429) {
+          // Rate limited — wait and auto-retry
+          setError(t('explore.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setLoading(false);
+          setTimeout(() => {
+            setError(null);
+            setPage(prev => prev); // trigger re-fetch
+          }, 5000);
+          return;
         }
-        
+
+        if (!response.ok) {
+          throw new Error(t('explore.fetchError', 'Không thể tải dữ liệu. Vui lòng thử lại sau.'));
+        }
+
         const result = await response.json();
 
         // Map backend data to MasonryGrid expected format
         const formattedItems = result.data.map(prompt => ({
           id: prompt.id,
           imageUrl: prompt.images && prompt.images.length > 0 ? resolveImageUrl(prompt.images[0].imageUrl) : '',
+          thumbnailUrl: prompt.images && prompt.images.length > 0 && prompt.images[0].thumbnailUrl ? resolveImageUrl(prompt.images[0].thumbnailUrl) : null,
           prompt: prompt.content,
           model: prompt.aiModel,
           source: prompt.source,
@@ -134,7 +147,7 @@ const Home = () => {
           likesCount: prompt.likesCount,
           bookmarksCount: prompt.bookmarksCount,
           author: {
-            name: prompt.user.username,
+            name: prompt.user.name || prompt.user.username,
             avatar: prompt.user.avatarUrl
           }
         }));
@@ -147,17 +160,18 @@ const Home = () => {
           return [...prevItems, ...newItems];
         });
         setHasMore(result.meta.hasMore);
+        setIsRendering(true); // Start rendering phase
       } catch (err) {
         setError(err.message);
       } finally {
-        setLoading(false);
+        setLoading(false); // Network complete
       }
     };
 
     if (hasMore) {
       fetchPrompts();
     }
-  }, [page, token, refreshKey]);
+  }, [page, user, refreshKey]);
 
   // Listen for new prompt creation and refresh the list
   useEffect(() => {
@@ -172,12 +186,12 @@ const Home = () => {
   }, []);
 
   const handleToggleLike = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/like`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/like`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -199,12 +213,12 @@ const Home = () => {
   };
 
   const handleToggleBookmark = async (id) => {
-    if (!token) {
+    if (!user) {
       setShowLoginModal(true);
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/prompts/${id}/bookmark`, {
+      const res = await fetch(`${API_BASE}/prompts/${id}/bookmark`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -256,8 +270,8 @@ const Home = () => {
           <div className="tag-filter-inner">
             <div className="tags-scroll-container">
               <button
-                className={`tag-filter-chip ${selectedTags.length === 0 ? 'active' : ''}`}
-                onClick={clearTags}
+                className={`tag-filter-chip ${selectedTags.length === 0 && !selectedModel ? 'active' : ''}`}
+                onClick={() => { clearTags(); setSelectedModel(''); }}
               >
                 {t('explore.all', 'All')}
               </button>
@@ -271,14 +285,14 @@ const Home = () => {
                   {tag.name}
                 </button>
               ))}
+            </div>
+            <div className="tag-filter-actions">
               {selectedTags.length > 0 && (
                 <button className="tag-filter-clear" onClick={clearTags}>
                   <X size={14} />
                   {t('explore.clearFilters', 'Clear')}
                 </button>
               )}
-            </div>
-            <div className="model-filter-container">
               <div className="model-filter-select-wrapper">
                 <Filter size={14} className="model-filter-icon" />
                 <select
@@ -297,16 +311,62 @@ const Home = () => {
         </div>
       )}
 
-      <MasonryGrid
-        items={items}
-        onToggleLike={handleToggleLike}
-        onToggleBookmark={handleToggleBookmark}
-        onInteractionSync={syncInteraction}
-      />
+
+      <div style={{ overflowX: 'hidden', padding: '0 12px' }}>
+        <MasonryGrid
+          items={items}
+          onToggleLike={handleToggleLike}
+          onToggleBookmark={handleToggleBookmark}
+          onInteractionSync={syncInteraction}
+          onLayoutComplete={() => setIsRendering(false)}
+        />
+      </div>
       <div ref={lastItemRef} style={{ height: '20px', width: '100%' }}></div>
-      {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading more...</div>}
-      {!hasMore && items.length > 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>No more prompts to load.</div>}
-      {!loading && items.length === 0 && selectedTags.length > 0 && (
+      {(loading || isRendering) && !error && (
+        <div style={{ textAlign: 'center', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <div className="profile-loading-spinner" style={{ width: '30px', height: '30px', margin: '0 auto' }}></div>
+          <span style={{ color: 'var(--on-surface-variant)', fontSize: '15px', fontWeight: '500' }}>{t('explore.loadingMore', 'Loading more prompts...')}</span>
+        </div>
+      )}
+      {error && (
+        <div style={{
+          textAlign: 'center',
+          padding: '30px 20px',
+          margin: '0 auto',
+          maxWidth: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: 'var(--surface-container-high)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px'
+          }}>⏳</div>
+          <p style={{ color: 'var(--on-surface)', fontSize: '15px', fontWeight: '500', margin: 0 }}>{error}</p>
+          <button
+            onClick={() => { setError(null); setRefreshKey(k => k + 1); }}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '20px',
+              border: '1px solid var(--outline-variant)',
+              background: 'var(--surface-container-high)',
+              color: 'var(--on-surface)',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >{t('explore.retry', 'Thử lại')}</button>
+        </div>
+      )}
+      {!hasMore && items.length > 0 && !(loading || isRendering) && <div style={{ textAlign: 'center', padding: '30px', color: 'var(--on-surface-variant)' }}>{t('explore.noMorePrompts', 'No more prompts to load.')}</div>}
+      {!(loading || isRendering) && items.length === 0 && selectedTags.length > 0 && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#888' }}>
           <p style={{ fontSize: '16px', marginBottom: '12px' }}>{t('explore.noResults', 'No prompts found for the selected tags.')}</p>
           <button className="tag-filter-clear" onClick={clearTags} style={{ margin: '0 auto' }}>
