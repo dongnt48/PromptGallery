@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
       POSTGRES_DB: ${POSTGRES_DB:-prompt_gallery}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,7 @@ services:
     container_name: modoha_backend
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     env_file:
       - .env
     environment:
@@ -49,7 +49,7 @@ services:
     container_name: modoha_frontend
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
 

@@ -143,7 +143,6 @@ const PromptDetailModal = ({ id, initialData, onClose, onInteractionSync, showTo
                     src={activeImage}
                     className="prompt-main-image-split"
                     autoPlay
-                    muted
                     loop
                     playsInline
                     controls
