@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as Ffmpeg from 'fluent-ffmpeg';
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import * as path from 'path';
+import * as fs from 'fs';
 
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
@@ -482,9 +483,17 @@ export class PromptsService {
             const urlPrefix = relativeDir ? `/uploads/${relativeDir}/` : `/uploads/`;
             
             if (file.mimetype.startsWith('video/') || file.filename.match(/\.(mp4|webm|mov)$/i)) {
-              thumbnailUrl = `${urlPrefix}${file.filename}.jpg`;
+              const dateFolder = path.basename(path.dirname(file.destination));
+              const thumbPath = path.join(process.cwd(), 'uploads', dateFolder, 'thumbnail');
+              const baseName = path.parse(file.filename).name;
+              
+              if (!fs.existsSync(thumbPath)) {
+                fs.mkdirSync(thumbPath, { recursive: true });
+              }
+              
+              thumbnailUrl = `/uploads/${dateFolder}/thumbnail/${baseName}.jpg`;
               const videoPath = file.path;
-              const thumbPath = file.destination;
+
               
               try {
                 await new Promise((resolve, reject) => {
@@ -492,7 +501,7 @@ export class PromptsService {
                     .screenshots({
                       count: 1,
                       folder: thumbPath,
-                      filename: `${file.filename}.jpg`,
+                      filename: `${baseName}.jpg`,
                       timemarks: ['00:00:00.000']
                     })
                     .on('end', resolve)

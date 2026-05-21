@@ -49,13 +49,10 @@
     "error": "Lỗi: "
   },
   "loginModal": {
-    "welcome": "Chào mừng đến với Lumina",
-    "subtitle": "Tham gia cộng đồng các nhà sáng tạo AI hàng đầu",
+    "welcome": "Chào mừng đến MODOHA",
+    "subtitle": "Đăng nhập để lưu, chia sẻ và khám phá hàng ngàn prompt sáng tạo.",
     "continueWithGoogle": "Tiếp tục với Google",
-    "agreement": "Bằng việc tiếp tục, bạn đồng ý với",
-    "terms": "Điều khoản Dịch vụ",
-    "and": "và",
-    "privacy": "Chính sách Bảo mật"
+    "agreement": "Khi tiếp tục, bạn đồng ý với Điều khoản và Chính sách của chúng tôi."
   },
   "promptDetail": {
     "loading": "Đang tải prompt...",
@@ -108,5 +105,8 @@
     "allModels": "Tất cả Model",
     "searchResultsFor": "Kết quả tìm kiếm cho",
     "clearSearch": "Xóa tìm kiếm"
+  },
+  "footer": {
+    "tagline": "chia sẻ Prompt."
   }
 }

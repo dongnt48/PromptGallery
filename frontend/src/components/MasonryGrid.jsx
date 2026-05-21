@@ -209,18 +209,6 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete, onVide
                 }
               }}
             />
-            <div style={{
-              position: 'absolute',
-              top: '12px',
-              right: '12px',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              borderRadius: '50%',
-              padding: '6px',
-              display: 'flex',
-              backdropFilter: 'blur(4px)'
-            }}>
-              <Video size={16} color="white" />
-            </div>
           </>
         ) : (
           <img 
@@ -234,6 +222,22 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete, onVide
               e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             }}
           />
+        )}
+        
+        {/* Top Right Overlays */}
+        {isVideo && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            borderRadius: '50%',
+            padding: '6px',
+            display: 'flex',
+            backdropFilter: 'blur(4px)'
+          }}>
+            <Video size={16} color="white" />
+          </div>
         )}
       </div>
       <div className="prompt-card-overlay">

@@ -22,9 +22,36 @@ const LoginModal = ({ isOpen, onClose }) => {
           <X size={20} />
         </button>
 
-        <div className="login-header">
-          <h2>{t('loginModal.welcome')}</h2>
-          <p>{t('loginModal.subtitle')}</p>
+        <div className="login-header" style={{ position: 'relative', zIndex: 1 }}>
+          <img 
+            src="/modoha_logo_soft.png" 
+            alt="MODOHA Logo" 
+            style={{ 
+              width: '72px', 
+              height: '72px', 
+              objectFit: 'cover', 
+              borderRadius: '20px',
+              margin: '0 auto 24px',
+              display: 'block',
+              boxShadow: '0 12px 24px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.03)'
+            }} 
+          />
+          <h2 style={{ 
+            background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', 
+            WebkitBackgroundClip: 'text', 
+            WebkitTextFillColor: 'transparent',
+            display: 'inline-block',
+            margin: 0,
+            fontSize: '32px',
+            fontWeight: 800,
+            letterSpacing: '-0.5px',
+            fontFamily: 'var(--font-heading)'
+          }}>
+            {t('loginModal.welcome')}
+          </h2>
+          <p style={{ color: 'var(--on-surface-variant)', fontSize: '15px', marginTop: '12px', lineHeight: '1.5' }}>
+            {t('loginModal.subtitle')}
+          </p>
         </div>
 
         <button className="google-login-btn" onClick={handleGoogleLogin}>
@@ -49,11 +76,9 @@ const LoginModal = ({ isOpen, onClose }) => {
           {t('loginModal.continueWithGoogle')}
         </button>
 
-        <div className="modal-footer">
-          {t('loginModal.agreement')} <br />
-          <a href="#">{t('loginModal.terms')}</a> {t('loginModal.and')} <a href="#">{t('loginModal.privacy')}</a>
-        </div>
+        
       </div>
+
     </div>
   );
 };

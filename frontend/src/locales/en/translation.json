@@ -49,13 +49,10 @@
     "error": "Error: "
   },
   "loginModal": {
-    "welcome": "Welcome to Lumina",
-    "subtitle": "Join our community of elite AI creators",
+    "welcome": "Welcome to MODOHA",
+    "subtitle": "Sign in to save, share, and explore thousands of creative prompts.",
     "continueWithGoogle": "Continue with Google",
-    "agreement": "By continuing, you agree to Lumina's",
-    "terms": "Terms of Service",
-    "and": "and",
-    "privacy": "Privacy Policy"
+    "agreement": "By continuing, you agree to our Terms and Privacy Policy."
   },
   "promptDetail": {
     "loading": "Loading prompt...",
@@ -64,7 +61,7 @@
     "creativeConcept": "CREATIVE CONCEPT",
     "copied": "Copied to clipboard!",
     "copiedShort": "Copied!",
-    "copyPrompt": "Copy Prompt",
+    "copyPrompt": "Copy",
     "published": "Published 2 days ago"
   },
   "createPrompt": {
@@ -109,5 +106,8 @@
     "allModels": "All Models",
     "searchResultsFor": "Search results for",
     "clearSearch": "Clear Search"
+  },
+  "footer": {
+    "tagline": "share prompt."
   }
 }

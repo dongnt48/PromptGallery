@@ -24,14 +24,16 @@ if (!existsSync(uploadsDir)) {
     }),
     MulterModule.register({
       storage: diskStorage({
-        destination: (_req, _file, cb) => {
+        destination: (_req, file, cb) => {
           const date = new Date();
           const year = date.getFullYear().toString();
           const month = (date.getMonth() + 1).toString().padStart(2, '0');
           const day = date.getDate().toString().padStart(2, '0');
           const folderName = `${year}${month}${day}`;
           
-          const targetDir = join(uploadsDir, folderName);
+          const subFolder = file.mimetype.startsWith('video/') ? 'video' : 'image';
+          const targetDir = join(uploadsDir, folderName, subFolder);
+          
           if (!existsSync(targetDir)) {
             mkdirSync(targetDir, { recursive: true });
           }

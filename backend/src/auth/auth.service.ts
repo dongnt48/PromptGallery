@@ -34,14 +34,17 @@ export class AuthService {
         },
       });
     } else {
-      // Always update avatar and name from Google to ensure it's fresh
+      // Update avatar and name from Google to ensure it's fresh, EXCEPT for admins
+      const updateData: any = { googleId: googleIdFromProfile };
+      
+      if (user.role !== 'admin') {
+        updateData.name = fullName;
+        if (picture) updateData.avatarUrl = picture;
+      }
+
       user = await this.prisma.user.update({
         where: { id: user.id },
-        data: { 
-          googleId: googleIdFromProfile, 
-          name: fullName,
-          avatarUrl: picture || user.avatarUrl 
-        },
+        data: updateData,
       });
     }
 
