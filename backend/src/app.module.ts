@@ -18,7 +18,8 @@ import { EncryptionInterceptor } from './encryption.interceptor';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 50,
+      limit: 100,
+      blockDuration: 600000, // 10 minutes lock if exceeded
     }]),
     PrismaModule,
     PromptsModule,
