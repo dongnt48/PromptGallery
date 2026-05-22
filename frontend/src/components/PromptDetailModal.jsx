@@ -138,7 +138,7 @@ const PromptDetailModal = ({ id, initialData, onClose, onInteractionSync, showTo
           ) : (
             <div className="prompt-split-container modal-layout">
               <div className="prompt-image-pane">
-                {activeImage?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                {activeImage?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
                   <video
                     src={activeImage}
                     className="prompt-main-image-split"
@@ -179,7 +179,7 @@ const PromptDetailModal = ({ id, initialData, onClose, onInteractionSync, showTo
                         className={`variation-thumb-sq ${activeImage === resolveImageUrl(img.imageUrl) ? 'active' : ''}`}
                         onClick={() => setActiveImage(resolveImageUrl(img.imageUrl))}
                       >
-                        {resolveImageUrl(img.imageUrl)?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                        {resolveImageUrl(img.imageUrl)?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
                           <video
                             src={resolveImageUrl(img.imageUrl)}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
