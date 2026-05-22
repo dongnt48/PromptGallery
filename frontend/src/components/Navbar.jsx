@@ -283,7 +283,7 @@ const Navbar = () => {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="user-dropdown mobile-only-item">
+                  <div className="user-dropdown mobile-only-item" style={{ flexDirection: 'column' }}>
                     <Link to="/" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                       <LayoutGrid size={16} />
                       {t('navbar.explore')}
