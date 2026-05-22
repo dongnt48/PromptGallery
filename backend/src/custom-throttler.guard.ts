@@ -2,7 +2,6 @@ import { Injectable, ExecutionContext, Logger, Inject } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerLimitDetail } from '@nestjs/throttler/dist/throttler.guard.interface';
 import { PrismaService } from './prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
@@ -11,44 +10,13 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   @Inject(PrismaService)
   private readonly prisma: PrismaService;
 
-  @Inject(JwtService)
-  private readonly jwtService: JwtService;
-
-  protected async getTracker(req: Record<string, any>): Promise<string> {
-    const token = req.cookies?.Authentication;
-    if (token) {
-      try {
-        const payload = this.jwtService.verify(token);
-        if (payload && payload.sub) {
-          return `user_${payload.sub}`;
-        }
-      } catch {
-        // Invalid or expired token, fallback to IP
-      }
-    }
-    
-    let ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown';
-    if (Array.isArray(ip)) ip = ip[0];
-    return `ip_${ip}`;
-  }
-
   protected async throwThrottlingException(context: ExecutionContext, throttlerLimitDetail: ThrottlerLimitDetail): Promise<void> {
     const req = context.switchToHttp().getRequest();
     
     let ip = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress || 'Unknown';
     if (Array.isArray(ip)) ip = ip[0];
     
-    let userId = 'Guest';
-    const token = req.cookies?.Authentication;
-    if (token) {
-      try {
-        const payload = this.jwtService.verify(token);
-        if (payload && payload.sub) {
-          userId = String(payload.sub);
-        }
-      } catch {}
-    }
-    
+    const userId = req.user ? String(req.user.id) : 'Guest';
     const pathUrl = req.originalUrl || req.url || '';
     
     // 1. Log to console for development visibility
