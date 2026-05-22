@@ -33,6 +33,8 @@ services:
     volumes:
       # Persist uploads on the host machine
       - ./backend/uploads:/app/uploads
+      # Mount scripts for running seeding/reset commands
+      - ./backend/scripts:/app/scripts
     depends_on:
       db:
         condition: service_healthy
