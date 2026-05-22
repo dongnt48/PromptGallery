@@ -10,7 +10,8 @@
     "create": "Create",
     "adminPanel": "Admin Panel",
     "logout": "Logout",
-    "login": "Login"
+    "login": "Login",
+    "back": "Back"
   },
   "myPrompts": {
     "title": "My Prompts",

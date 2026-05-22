@@ -19,6 +19,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAllRead } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileNotifs, setShowMobileNotifs] = useState(false);
 
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -43,6 +44,12 @@ const Navbar = () => {
     setSearchQuery(searchParam || '');
     setIsMobileMenuOpen(false);
   }, [location.search, location.pathname]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) {
+      setShowMobileNotifs(false);
+    }
+  }, [isDropdownOpen]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -179,11 +186,6 @@ const Navbar = () => {
                       e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
                     }}
                   />
-                  {unreadCount > 0 && (
-                    <span className="avatar-notif-badge-mobile">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
                 </div>
 
                 {/* Mobile Trigger (Hamburger Menu) */}
@@ -202,65 +204,109 @@ const Navbar = () => {
 
                 {isDropdownOpen && (
                   <div className="user-dropdown">
-                    <div className="dropdown-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px' }}>
-                      <img
-                        src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
-                        alt={user.name || user.username}
-                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.06)' }}
-                        onError={(e) => {
-                          e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
-                        }}
-                      />
-                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span className="username" style={{ fontWeight: '600', color: 'var(--on-surface)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name || user.username}</span>
-                        <span className="email" style={{ fontSize: '12px', color: 'var(--on-surface-variant)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
+                    {showMobileNotifs ? (
+                      <div className="mobile-notifs-view" style={{ width: '100%' }}>
+                        <div className="notif-dropdown-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                          <button 
+                            onClick={() => setShowMobileNotifs(false)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', color: 'var(--on-surface-variant)', fontWeight: '600' }}
+                          >
+                            ← {t('navbar.back')}
+                          </button>
+                          {notifications.length > 0 && (
+                            <button className="notif-clear" onClick={() => { markAllRead(); }}>
+                              {t('navbar.markAllRead')}
+                            </button>
+                          )}
+                        </div>
+                        <div className="notif-dropdown-body" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                          {notifications.length === 0 ? (
+                            <div className="notif-empty" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                              <Bell size={24} color="var(--outline-variant)" style={{ margin: '0 auto 8px' }} />
+                              <p>{t('navbar.noNotifications')}</p>
+                            </div>
+                          ) : (
+                            notifications.slice(0, 10).map(n => (
+                              <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`} style={{ padding: '10px 16px', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                                <span className="notif-message" style={{ display: 'block', marginBottom: '4px' }}>{n.message}</span>
+                                <span className="notif-time" style={{ display: 'block' }}>{formatTimeAgo(n.timestamp)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    
-                    {/* Mobile Only Menu Links */}
-                    <div className="mobile-only-item" style={{ flexDirection: 'column', width: '100%' }}>
-                      <button className="dropdown-item" onClick={() => { setIsCreateOpen(true); setIsDropdownOpen(false); }}>
-                        <Plus size={16} />
-                        {t('navbar.create')}
-                      </button>
-                      <Link to="/" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LayoutGrid size={16} />
-                        {t('navbar.explore')}
-                      </Link>
-                      <Link to="/my-prompts" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <Sparkles size={16} />
-                        {t('navbar.myPrompts')}
-                      </Link>
-                      <Link to="/bookmarks" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <Bookmark size={16} />
-                        {t('navbar.bookmarks')}
-                      </Link>
-                      <button className="dropdown-item" onClick={(e) => { handleNotifClick(e); setIsDropdownOpen(false); }}>
-                        <Bell size={16} />
-                        {t('navbar.notifications')}
-                        {unreadCount > 0 && (
-                          <span className="menu-badge" style={{ marginLeft: 'auto', background: 'var(--error)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
-                            {unreadCount}
-                          </span>
-                        )}
-                      </button>
-                      <button className="dropdown-item" onClick={() => { toggleLanguage(); setIsDropdownOpen(false); }}>
-                        <Globe size={16} />
-                        {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
-                      </button>
-                      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
-                    </div>
+                    ) : (
+                      <>
+                        <div className="dropdown-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px' }}>
+                          <img
+                            src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
+                            alt={user.name || user.username}
+                            style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.06)' }}
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span className="username" style={{ fontWeight: '600', color: 'var(--on-surface)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name || user.username}</span>
+                            <span className="email" style={{ fontSize: '12px', color: 'var(--on-surface-variant)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Mobile Only Menu Links */}
+                        <div className="mobile-only-item" style={{ flexDirection: 'column', width: '100%' }}>
+                          <button className="dropdown-item" onClick={() => { setIsCreateOpen(true); setIsDropdownOpen(false); }}>
+                            <Plus size={16} />
+                            {t('navbar.create')}
+                          </button>
+                          <Link to="/" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                            <LayoutGrid size={16} />
+                            {t('navbar.explore')}
+                          </Link>
+                          <Link to="/my-prompts" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                            <Sparkles size={16} />
+                            {t('navbar.myPrompts')}
+                          </Link>
+                          <Link to="/bookmarks" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                            <Bookmark size={16} />
+                            {t('navbar.bookmarks')}
+                          </Link>
+                          <button 
+                            className="dropdown-item" 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setShowMobileNotifs(true); 
+                              if (unreadCount > 0) {
+                                markAllRead();
+                              }
+                            }}
+                          >
+                            <Bell size={16} />
+                            {t('navbar.notifications')}
+                            {unreadCount > 0 && (
+                              <span className="menu-badge" style={{ marginLeft: 'auto', background: 'var(--error)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                {unreadCount}
+                              </span>
+                            )}
+                          </button>
+                          <button className="dropdown-item" onClick={() => { toggleLanguage(); setIsDropdownOpen(false); }}>
+                            <Globe size={16} />
+                            {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
+                          </button>
+                          <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+                        </div>
 
-                    {user.role === 'admin' && (
-                      <Link to="/admin" className="dropdown-item" style={{ textDecoration: 'none', color: '#7c3aed' }} onClick={() => setIsDropdownOpen(false)}>
-                        <Shield size={16} />
-                        {t('navbar.adminPanel')}
-                      </Link>
+                        {user.role === 'admin' && (
+                          <Link to="/admin" className="dropdown-item" style={{ textDecoration: 'none', color: '#7c3aed' }} onClick={() => setIsDropdownOpen(false)}>
+                            <Shield size={16} />
+                            {t('navbar.adminPanel')}
+                          </Link>
+                        )}
+                        <button className="dropdown-item logout" onClick={logout}>
+                          <LogOut size={16} />
+                          {t('navbar.logout')}
+                        </button>
+                      </>
                     )}
-                    <button className="dropdown-item logout" onClick={logout}>
-                      <LogOut size={16} />
-                      {t('navbar.logout')}
-                    </button>
                   </div>
                 )}
               </div>

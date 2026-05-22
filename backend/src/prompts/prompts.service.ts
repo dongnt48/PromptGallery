@@ -30,6 +30,12 @@ export class PromptsService {
       ...(authorId ? { userId: authorId } : {}),
     };
 
+    if (!authorId) {
+      whereClause.isPublic = true;
+    } else if (userId === undefined || userId === null || BigInt(userId) !== BigInt(authorId)) {
+      whereClause.isPublic = true;
+    }
+
     if (aiModel) {
       if (aiModel === 'Other') {
         whereClause.aiModel = null;
@@ -168,6 +174,10 @@ export class PromptsService {
 
     if (!prompt) return null;
 
+    if (!prompt.isPublic && (userId === undefined || userId === null || BigInt(userId) !== BigInt(prompt.userId))) {
+      return null;
+    }
+
     let isLiked = false;
     let isBookmarked = false;
 
@@ -197,14 +207,31 @@ export class PromptsService {
     const skip = (page - 1) * limit;
     const take = limit;
 
-    const whereClause: any = { userId, prompt: { isDelete: false } };
+    const whereClause: any = {
+      userId,
+      prompt: {
+        isDelete: false,
+        OR: [
+          { isPublic: true },
+          { userId: userId }
+        ]
+      }
+    };
 
     if (searchKeyword && searchKeyword.trim() !== '') {
       whereClause.prompt = {
-        ...whereClause.prompt,
+        isDelete: false,
         OR: [
-          { content: { contains: searchKeyword.trim(), mode: 'insensitive' } },
-          { tags: { some: { tag: { name: { contains: searchKeyword.trim(), mode: 'insensitive' } } } } }
+          { isPublic: true },
+          { userId: userId }
+        ],
+        AND: [
+          {
+            OR: [
+              { content: { contains: searchKeyword.trim(), mode: 'insensitive' } },
+              { tags: { some: { tag: { name: { contains: searchKeyword.trim(), mode: 'insensitive' } } } } }
+            ]
+          }
         ]
       };
     }
@@ -384,7 +411,12 @@ export class PromptsService {
 
         // Add new tags
         for (const tagName of data.tags) {
-          const slug = tagName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const slug = tagName
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
           const tag = await tx.tag.upsert({
             where: { slug },
             update: {},
@@ -527,7 +559,12 @@ export class PromptsService {
         // 3. Process tags
         if (body.tags && body.tags.length > 0) {
           for (const tagName of body.tags) {
-            const slug = tagName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const slug = tagName
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-');
             
             // Upsert tag
             const tag = await tx.tag.upsert({

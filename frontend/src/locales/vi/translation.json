@@ -10,7 +10,8 @@
     "create": "Tạo mới",
     "adminPanel": "Trang quản trị",
     "logout": "Đăng xuất",
-    "login": "Đăng nhập"
+    "login": "Đăng nhập",
+    "back": "Quay lại"
   },
   "myPrompts": {
     "title": "Prompt của tôi",

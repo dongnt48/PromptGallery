@@ -566,6 +566,7 @@ button {
     width: 16px;
     height: 16px;
     border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
     border: 1.5px solid #fff;
