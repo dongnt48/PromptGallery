@@ -368,7 +368,7 @@ const CreatePromptModal = ({ isOpen, onClose, prompt = null, onUpdate = null }) 
               <div className="upload-preview-grid">
                 {images.map((img, idx) => (
                   <div key={idx} className={`upload-preview-item ${idx === 0 ? 'is-cover' : ''}`}>
-                    {img.file?.type?.startsWith('video/') || img.preview?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
+                    {img.file?.type?.startsWith('video/') || img.preview?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
                       <video src={img.preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop playsInline />
                     ) : (
                       <img src={img.preview} alt={`Upload ${idx + 1}`} />

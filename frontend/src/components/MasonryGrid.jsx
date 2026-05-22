@@ -157,7 +157,7 @@ const MasonryGrid = ({ items, onToggleLike, onToggleBookmark, onInteractionSync,
 const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete, onVideoLoaded }) => {
   const [justCopied, setJustCopied] = useState(false);
   const videoRef = useRef(null);
-  const isVideo = item.imageUrl?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i);
+  const isVideo = item.imageUrl?.match(/\.(mp4|webm|ogg|mov)$/i);
 
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current) {

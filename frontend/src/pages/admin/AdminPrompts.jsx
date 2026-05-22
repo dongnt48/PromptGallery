@@ -231,7 +231,7 @@ const AdminPrompts = () => {
                       </td>
                       <td>
                         {p.images && p.images.length > 0 ? (
-                          resolveImageUrl(p.images[0].imageUrl)?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
+                          resolveImageUrl(p.images[0].imageUrl)?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
                             <video
                               src={resolveImageUrl(p.images[0].imageUrl)}
                               className="admin-prompt-thumb"
