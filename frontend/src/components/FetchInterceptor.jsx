@@ -29,7 +29,15 @@ const FetchInterceptor = () => {
         const response = await originalFetch(url, config);
         
         if (response.status === 429) {
-          showGlobalToast("Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại!");
+          const retryAfter = response.headers.get('Retry-After');
+          let seconds = 600; // 10 minutes default
+          if (retryAfter) {
+            const parsed = parseInt(retryAfter, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              seconds = parsed;
+            }
+          }
+          window.dispatchEvent(new CustomEvent('apiRateLimited', { detail: seconds }));
         }
 
         // 2. DECRYPT RESPONSE BODY

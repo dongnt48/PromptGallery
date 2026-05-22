@@ -1,4 +1,9 @@
 {
+  "blocked": {
+    "title": "Access Restricted",
+    "description": "You have sent too many requests continuously. Please try again in a few minutes.",
+    "retryBtn": "Try Again"
+  },
   "navbar": {
     "explore": "Explore",
     "myPrompts": "My Prompts",

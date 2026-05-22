@@ -3934,3 +3934,123 @@ button {
     font-size: 11px;
   }
 }
+
+/* ==========================================
+   Blocked Page (Rate Limit Screen)
+   ========================================== */
+.blocked-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  min-height: calc(100vh - 280px); /* Fill vertical space between header/footer */
+  background-color: var(--background);
+  font-family: var(--font-body);
+}
+
+.blocked-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--rounded-2xl, 24px);
+  padding: 48px 36px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cardFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.blocked-icon-container {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--error-container);
+  border-radius: 50%;
+  margin-bottom: 24px;
+}
+
+.blocked-icon-alert {
+  color: var(--error);
+  z-index: 2;
+  animation: pulseIcon 2s infinite ease-in-out;
+}
+
+@keyframes pulseIcon {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.blocked-pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--error);
+  opacity: 0;
+  animation: ringExpand 2s infinite cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+@keyframes ringExpand {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.blocked-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.3px;
+}
+
+.blocked-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+  margin: 0 0 32px 0;
+}
+
+.blocked-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.blocked-retry-btn {
+  width: 100%;
+  max-width: 200px;
+  font-family: var(--font-body);
+}

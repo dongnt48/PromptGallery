@@ -1,4 +1,9 @@
 {
+  "blocked": {
+    "title": "Truy cập bị hạn chế",
+    "description": "Bạn đã gửi quá nhiều yêu cầu liên tiếp. Vui lòng thử lại sau vài phút.",
+    "retryBtn": "Thử lại"
+  },
   "navbar": {
     "explore": "Khám phá",
     "myPrompts": "Prompt của tôi",

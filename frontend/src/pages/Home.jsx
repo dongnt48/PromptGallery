@@ -81,7 +81,7 @@ const Home = () => {
   }, [selectedTags, selectedModel, searchKeyword]);
 
   const lastItemRef = useCallback(node => {
-    if (loading) return;
+    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
@@ -90,10 +90,11 @@ const Home = () => {
       }
     }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, error]);
 
   useEffect(() => {
     const fetchPrompts = async () => {
+      setError(null);
       setLoading(true);
       try {
         let url = `${API_BASE}/prompts?page=${page}&limit=10`;
@@ -118,13 +119,8 @@ const Home = () => {
         }
 
         if (response.status === 429) {
-          // Rate limited — wait and auto-retry
-          setError(t('explore.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setError(t('explore.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng thử lại sau ít phút.'));
           setLoading(false);
-          setTimeout(() => {
-            setError(null);
-            setPage(prev => prev); // trigger re-fetch
-          }, 5000);
           return;
         }
 

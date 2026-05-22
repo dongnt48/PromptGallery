@@ -2,6 +2,8 @@ import { Injectable, ExecutionContext, Logger, Inject } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerLimitDetail } from '@nestjs/throttler/dist/throttler.guard.interface';
 import { PrismaService } from './prisma/prisma.service';
+import { createHash } from 'crypto';
+import { verify } from 'jsonwebtoken';
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
@@ -9,6 +11,30 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   
   @Inject(PrismaService)
   private readonly prisma: PrismaService;
+
+  protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest();
+    const token = req.cookies?.Authentication;
+    if (!token) return false;
+
+    try {
+      const secret = process.env.JWT_SECRET || 'SECRET_KEY';
+      const payload: any = verify(token, secret);
+      if (payload && payload.role === 'admin') {
+        return true; // Skip rate limiting for admin users
+      }
+    } catch (err) {
+      // Invalid token, do not skip
+    }
+    return false;
+  }
+
+  protected generateKey(context: ExecutionContext, suffix: string, name: string): string {
+    // Generate a global rate limit key based only on the IP (suffix) and throttler config name.
+    // This blocks the user globally across all API routes once they hit the limit on any API.
+    const prefix = `global-${name}`;
+    return createHash('sha256').update(`${prefix}-${suffix}`).digest('hex');
+  }
 
   protected async throwThrottlingException(context: ExecutionContext, throttlerLimitDetail: ThrottlerLimitDetail): Promise<void> {
     const req = context.switchToHttp().getRequest();

@@ -41,7 +41,7 @@ const MyPrompts = () => {
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
-    if (loading) return;
+    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
@@ -49,12 +49,13 @@ const MyPrompts = () => {
       }
     }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, error]);
 
   useEffect(() => {
     const fetchMyPrompts = async () => {
       if (!user) return;
 
+      setError(null);
       setLoading(true);
       try {
         let url = `${API_BASE}/prompts/my?page=${page}&limit=10`;
@@ -65,9 +66,8 @@ const MyPrompts = () => {
           credentials: 'include'
         });
         if (response.status === 429) {
-          setError(t('myPrompts.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setError(t('myPrompts.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng thử lại sau ít phút.'));
           setLoading(false);
-          setTimeout(() => { setError(null); setRefreshKey(k => k + 1); }, 5000);
           return;
         }
         if (!response.ok) {

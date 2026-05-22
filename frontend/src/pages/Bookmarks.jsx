@@ -35,7 +35,7 @@ const Bookmarks = () => {
   const observer = useRef();
 
   const lastItemRef = useCallback(node => {
-    if (loading) return;
+    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
@@ -43,12 +43,13 @@ const Bookmarks = () => {
       }
     }, { rootMargin: '100px' });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, error]);
 
   useEffect(() => {
     const fetchBookmarks = async () => {
       if (!user) return;
       
+      setError(null);
       setLoading(true);
       try {
         let url = `${API_BASE}/prompts/bookmarks?page=${page}&limit=10`;
@@ -59,9 +60,8 @@ const Bookmarks = () => {
           credentials: 'include'
         });
         if (response.status === 429) {
-          setError(t('bookmarks.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng đợi vài giây...'));
+          setError(t('bookmarks.rateLimited', 'Bạn đang tải quá nhanh. Vui lòng thử lại sau ít phút.'));
           setLoading(false);
-          setTimeout(() => { setError(null); setRefreshKey(k => k + 1); }, 5000);
           return;
         }
         if (!response.ok) {
