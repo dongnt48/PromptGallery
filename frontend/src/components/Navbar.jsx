@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut, Shield, Menu, X } from 'lucide-react';
+import { Search, Bell, LogOut, Shield, Menu, X, Plus, LayoutGrid, Globe, Sparkles, Bookmark } from 'lucide-react';
 import LoginModal from './LoginModal';
 import CreatePromptModal from './CreatePromptModal';
 import { useAuth } from '../context/AuthContext';
@@ -88,26 +88,11 @@ const Navbar = () => {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
-            <button
-              className="icon-btn mobile-menu-btn"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
             <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
               <img src="/modoha_logo_soft.png" alt="MODOHA Icon" style={{ height: '36px', width: '36px', objectFit: 'cover', borderRadius: '8px' }} />
-              <span style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '0.5px', fontFamily: 'var(--font-heading)' }}>MODOHA</span>
+              <span className="navbar-logo-text" style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '0.5px', fontFamily: 'var(--font-heading)' }}>MODOHA</span>
             </Link>
-            <div className={`navbar-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-              <form className="navbar-search mobile-search" onSubmit={handleSearchSubmit}>
-                <Search size={18} color="var(--outline-variant)" />
-                <input
-                  type="text"
-                  placeholder={t('navbar.search')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </form>
+            <div className="navbar-links desktop-only-item">
               <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>{t('navbar.explore')}</Link>
               <Link to="/my-prompts" className={`nav-link ${location.pathname === '/my-prompts' ? 'active' : ''}`}>{t('navbar.myPrompts')}</Link>
               <Link to="/bookmarks" className={`nav-link ${location.pathname === '/bookmarks' ? 'active' : ''}`}>{t('navbar.bookmarks')}</Link>
@@ -116,15 +101,15 @@ const Navbar = () => {
 
           <div className="navbar-actions">
             <button
-              className="icon-btn lang-toggle"
+              className="icon-btn lang-toggle desktop-only-item"
               onClick={toggleLanguage}
               title={i18n.language === 'en' ? 'Switch to Vietnamese' : 'Switch to English'}
               style={{ fontSize: '14px', fontWeight: 'bold' }}
             >
-              {i18n.language === 'en' ? 'EN' : 'VI'}
+              {i18n.language === 'en' ? 'VI' : 'EN'}
             </button>
 
-            <form className="navbar-search" onSubmit={handleSearchSubmit}>
+            <form className="navbar-search desktop-only-item" onSubmit={handleSearchSubmit}>
               <Search size={18} color="var(--outline-variant)" />
               <input
                 type="text"
@@ -135,7 +120,7 @@ const Navbar = () => {
             </form>
 
             {/* Notification Bell */}
-            <div className="notif-container" ref={notifRef}>
+            <div className="notif-container desktop-only-item" ref={notifRef}>
               <button className="icon-btn" onClick={handleNotifClick}>
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -172,28 +157,100 @@ const Navbar = () => {
               )}
             </div>
 
-            <button className="btn-primary" onClick={handleCreateClick}>
-              {t('navbar.create')}
+            <button className="btn-primary create-nav-btn desktop-only-item" onClick={handleCreateClick} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Plus size={18} className="create-nav-icon" style={{ display: 'none' }} />
+              <span className="create-nav-text">{t('navbar.create')}</span>
             </button>
 
             {user ? (
               <div className="user-menu-container" ref={userMenuRef}>
-                <img
-                  src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
-                  alt={user.name || user.username}
-                  className="avatar"
-                  referrerPolicy="no-referrer"
+                {/* Desktop Trigger (Avatar) */}
+                <div 
+                  className="desktop-only-item"
+                  style={{ position: 'relative', cursor: 'pointer' }}
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
-                  }}
-                />
+                >
+                  <img
+                    src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
+                    alt={user.name || user.username}
+                    className="avatar"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
+                    }}
+                  />
+                  {unreadCount > 0 && (
+                    <span className="avatar-notif-badge-mobile">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+
+                {/* Mobile Trigger (Hamburger Menu) */}
+                <div 
+                  className="mobile-only-item"
+                  style={{ position: 'relative', cursor: 'pointer', width: '38px', height: '38px', borderRadius: '50%', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <Menu size={20} />
+                  {unreadCount > 0 && (
+                    <span className="avatar-notif-badge-mobile">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+
                 {isDropdownOpen && (
                   <div className="user-dropdown">
-                    <div className="dropdown-header">
-                      <span className="username">{user.name || user.username}</span>
-                      <span className="email">{user.email}</span>
+                    <div className="dropdown-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px' }}>
+                      <img
+                        src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`}
+                        alt={user.name || user.username}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.06)' }}
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${user.name || user.username}&background=random`;
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span className="username" style={{ fontWeight: '600', color: 'var(--on-surface)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name || user.username}</span>
+                        <span className="email" style={{ fontSize: '12px', color: 'var(--on-surface-variant)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
+                      </div>
                     </div>
+                    
+                    {/* Mobile Only Menu Links */}
+                    <div className="mobile-only-item" style={{ flexDirection: 'column', width: '100%' }}>
+                      <button className="dropdown-item" onClick={() => { setIsCreateOpen(true); setIsDropdownOpen(false); }}>
+                        <Plus size={16} />
+                        {t('navbar.create')}
+                      </button>
+                      <Link to="/" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LayoutGrid size={16} />
+                        {t('navbar.explore')}
+                      </Link>
+                      <Link to="/my-prompts" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <Sparkles size={16} />
+                        {t('navbar.myPrompts')}
+                      </Link>
+                      <Link to="/bookmarks" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <Bookmark size={16} />
+                        {t('navbar.bookmarks')}
+                      </Link>
+                      <button className="dropdown-item" onClick={(e) => { handleNotifClick(e); setIsDropdownOpen(false); }}>
+                        <Bell size={16} />
+                        {t('navbar.notifications')}
+                        {unreadCount > 0 && (
+                          <span className="menu-badge" style={{ marginLeft: 'auto', background: 'var(--error)', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
+                      <button className="dropdown-item" onClick={() => { toggleLanguage(); setIsDropdownOpen(false); }}>
+                        <Globe size={16} />
+                        {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
+                      </button>
+                      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+                    </div>
+
                     {user.role === 'admin' && (
                       <Link to="/admin" className="dropdown-item" style={{ textDecoration: 'none', color: '#7c3aed' }} onClick={() => setIsDropdownOpen(false)}>
                         <Shield size={16} />
@@ -208,13 +265,41 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button
-                className="nav-link"
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-                onClick={() => setIsModalOpen(true)}
-              >
-                {t('navbar.login')}
-              </button>
+              <div className="user-menu-container" ref={userMenuRef}>
+                <button
+                  className="icon-btn mobile-only-item"
+                  style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--surface-container)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <Menu size={20} />
+                </button>
+                
+                <button
+                  className="nav-link desktop-only-item"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  {t('navbar.login')}
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="user-dropdown mobile-only-item">
+                    <Link to="/" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                      <LayoutGrid size={16} />
+                      {t('navbar.explore')}
+                    </Link>
+                    <button className="dropdown-item" onClick={() => { toggleLanguage(); setIsDropdownOpen(false); }}>
+                      <Globe size={16} />
+                      {i18n.language === 'en' ? 'Tiếng Việt' : 'English'}
+                    </button>
+                    <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '6px 0' }} />
+                    <button className="dropdown-item" onClick={() => { setIsModalOpen(true); setIsDropdownOpen(false); }}>
+                      <LogOut size={16} style={{ transform: 'rotate(180deg)' }} />
+                      {t('navbar.login')}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

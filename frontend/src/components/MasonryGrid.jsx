@@ -254,20 +254,20 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete, onVide
                  }}
                />
              )}
-             <span className="author-name label-sm" style={{ textTransform: 'none', fontWeight: 600, color: '#fff' }}>{item.author?.name}</span>
+             <span className="author-name label-sm" style={{ textTransform: 'none', fontWeight: 600, color: 'var(--on-surface)' }}>{item.author?.name}</span>
            </div>
            <div className="prompt-actions" onClick={(e) => e.stopPropagation()}>
               <div className={`action-item ${item.isLiked ? 'active-like' : ''}`} onClick={(e) => e.stopPropagation()}>
                 <button className="icon-btn-small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onLike(); }}>
-                  <Heart size={16} fill={item.isLiked ? "#ef4444" : "none"} color={item.isLiked ? "#ef4444" : "#fff"} />
+                  <Heart size={16} fill={item.isLiked ? "#ef4444" : "none"} color={item.isLiked ? '#ef4444' : 'var(--on-surface)'} />
                 </button>
-                <span className="count-label" style={{ color: item.isLiked ? '#ef4444' : '#fff' }}>{item.likesCount || 0}</span>
+                <span className="count-label" style={{ color: item.isLiked ? '#ef4444' : 'var(--on-surface-variant)' }}>{item.likesCount || 0}</span>
               </div>
               <div className={`action-item ${item.isBookmarked ? 'active-save' : ''}`} onClick={(e) => e.stopPropagation()}>
                 <button className="icon-btn-small" onClick={(e) => { e.stopPropagation(); e.preventDefault(); onBookmark(); }}>
-                  <Bookmark size={16} fill={item.isBookmarked ? "#f59e0b" : "none"} color={item.isBookmarked ? "#f59e0b" : "#fff"} />
+                  <Bookmark size={16} fill={item.isBookmarked ? "#f59e0b" : "none"} color={item.isBookmarked ? '#f59e0b' : 'var(--on-surface)'} />
                 </button>
-                <span className="count-label" style={{ color: item.isBookmarked ? '#f59e0b' : '#fff' }}>{item.bookmarksCount || 0}</span>
+                <span className="count-label" style={{ color: item.isBookmarked ? '#f59e0b' : 'var(--on-surface-variant)' }}>{item.bookmarksCount || 0}</span>
               </div>
               
               {item.source && (
@@ -278,14 +278,14 @@ const PromptCard = ({ item, onLike, onBookmark, onCopy, onEdit, onDelete, onVide
                   title="View source"
                   onClick={(e) => e.stopPropagation()}
                   className="icon-btn-small"
-                  style={{ color: '#fff' }}
+                  style={{ color: 'var(--on-surface)' }}
                 >
                   <Link size={16} />
                 </a>
               )}
               
               {onEdit && (
-                <button className="icon-btn-small edit-btn" style={{ color: '#fff' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}>
+                <button className="icon-btn-small edit-btn" style={{ color: 'var(--on-surface)' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}>
                   <Pencil size={16} />
                 </button>
               )}

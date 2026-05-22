@@ -286,13 +286,13 @@ const Home = () => {
                 </button>
               ))}
             </div>
+            {selectedTags.length > 0 && (
+              <button className="tag-filter-clear" onClick={clearTags} style={{ flexShrink: 0 }}>
+                <X size={14} />
+                {t('explore.clearFilters', 'Clear')}
+              </button>
+            )}
             <div className="tag-filter-actions">
-              {selectedTags.length > 0 && (
-                <button className="tag-filter-clear" onClick={clearTags}>
-                  <X size={14} />
-                  {t('explore.clearFilters', 'Clear')}
-                </button>
-              )}
               <div className="model-filter-select-wrapper">
                 <Filter size={14} className="model-filter-icon" />
                 <select
