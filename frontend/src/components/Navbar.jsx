@@ -20,6 +20,7 @@ const Navbar = () => {
   const { notifications, unreadCount, markAllRead } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileNotifs, setShowMobileNotifs] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const notifRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -43,6 +44,7 @@ const Navbar = () => {
     const searchParam = params.get('search');
     setSearchQuery(searchParam || '');
     setIsMobileMenuOpen(false);
+    setIsMobileSearchOpen(false);
   }, [location.search, location.pathname]);
 
   useEffect(() => {
@@ -167,6 +169,28 @@ const Navbar = () => {
             <button className="btn-primary create-nav-btn desktop-only-item" onClick={handleCreateClick} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Plus size={18} className="create-nav-icon" style={{ display: 'none' }} />
               <span className="create-nav-text">{t('navbar.create')}</span>
+            </button>
+
+            {/* Mobile Search Button */}
+            <button 
+              className="icon-btn mobile-only-item"
+              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+              style={{ 
+                width: '38px', 
+                height: '38px', 
+                borderRadius: '50%', 
+                background: 'var(--surface-container)', 
+                border: 'none', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--on-surface)',
+                marginRight: '4px'
+              }}
+              title={t('navbar.search')}
+            >
+              <Search size={20} />
             </button>
 
             {user ? (
@@ -350,6 +374,40 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
+      
+      {/* Mobile Search Overlay */}
+      {isMobileSearchOpen && (
+        <div className="mobile-search-bar-overlay" style={{
+          position: 'fixed',
+          top: '72px',
+          left: 0,
+          right: 0,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          padding: '12px 16px',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          zIndex: 999,
+          animation: 'slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+        }}>
+          <form className="navbar-search" style={{ display: 'flex', width: '100%', height: '44px', background: '#f5f5f5', borderRadius: '22px', padding: '0 16px', alignItems: 'center' }} onSubmit={(e) => { handleSearchSubmit(e); setIsMobileSearchOpen(false); }}>
+            <Search size={18} color="var(--outline-variant)" />
+            <input
+              type="text"
+              placeholder={t('navbar.search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ border: 'none', background: 'transparent', width: '100%', paddingLeft: '12px', outline: 'none', fontSize: '15px' }}
+              autoFocus
+            />
+            {searchQuery && (
+              <button type="button" onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: 'var(--outline)' }}>
+                <X size={16} />
+              </button>
+            )}
+          </form>
+        </div>
+      )}
 
       <LoginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <CreatePromptModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
