@@ -33,17 +33,20 @@ const Bookmarks = () => {
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('search') || '';
   const observer = useRef();
+  const loadingRef = useRef(false);
+  const isFirstMount = useRef(true);
+  const prevUserIdRef = useRef(undefined);
 
   const lastItemRef = useCallback(node => {
-    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
+    if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
         setPage(prevPage => prevPage + 1);
       }
-    }, { rootMargin: '100px' });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, error]);
+    }, { rootMargin: '100px', threshold: 1.0 });
+    observer.current.observe(node);
+  }, [hasMore]);
 
   useEffect(() => {
     const fetchBookmarks = async () => {
@@ -51,6 +54,7 @@ const Bookmarks = () => {
       
       setError(null);
       setLoading(true);
+      loadingRef.current = true;
       try {
         let url = `${API_BASE}/prompts/bookmarks?page=${page}&limit=10`;
         if (searchQuery) {
@@ -103,15 +107,36 @@ const Bookmarks = () => {
         setError(err.message);
       } finally {
         setLoading(false);
+        loadingRef.current = false;
         setInitialLoading(false);
       }
     };
 
     fetchBookmarks();
-  }, [page, user, refreshKey, searchQuery]);
+  }, [page, refreshKey, searchQuery]);
 
-  // Reset page and items when search query changes
+  // Refetch when user logs in/out (skip initial auth resolution)
   useEffect(() => {
+    const currentUserId = user?.id;
+    if (prevUserIdRef.current === undefined) {
+      prevUserIdRef.current = currentUserId;
+      return;
+    }
+    if (prevUserIdRef.current !== currentUserId) {
+      prevUserIdRef.current = currentUserId;
+      setItems([]);
+      setPage(1);
+      setHasMore(true);
+      setRefreshKey(k => k + 1);
+    }
+  }, [user]);
+
+  // Reset page and items when search query changes (skip first mount)
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     setItems([]);
     setPage(1);
     setHasMore(true);
