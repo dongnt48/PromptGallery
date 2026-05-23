@@ -26,6 +26,7 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const showLoginModalRef = useRef(false);
+  const loadingRef = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -81,21 +82,22 @@ const Home = () => {
   }, [selectedTags, selectedModel, searchKeyword]);
 
   const lastItemRef = useCallback(node => {
-    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
+    if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
         if (showLoginModalRef.current) return;
         setPage(prevPage => prevPage + 1);
       }
-    }, { rootMargin: '100px' });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, error]);
+    }, { rootMargin: '100px', threshold: 1.0 });
+    observer.current.observe(node);
+  }, [hasMore]);
 
   useEffect(() => {
     const fetchPrompts = async () => {
       setError(null);
       setLoading(true);
+      loadingRef.current = true;
       try {
         let url = `${API_BASE}/prompts?page=${page}&limit=10`;
         if (selectedTags.length > 0) {
@@ -160,7 +162,8 @@ const Home = () => {
       } catch (err) {
         setError(err.message);
       } finally {
-        setLoading(false); // Network complete
+        setLoading(false);
+        loadingRef.current = false;
       }
     };
 
