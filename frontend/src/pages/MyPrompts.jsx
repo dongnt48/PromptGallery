@@ -47,12 +47,12 @@ const MyPrompts = () => {
     if (observer.current) observer.current.disconnect();
     if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering) {
         setPage(prevPage => prevPage + 1);
       }
-    }, { rootMargin: '100px', threshold: 1.0 });
+    }, { rootMargin: '100px' });
     observer.current.observe(node);
-  }, [hasMore]);
+  }, [hasMore, isRendering]);
 
   useEffect(() => {
     const fetchMyPrompts = async () => {
