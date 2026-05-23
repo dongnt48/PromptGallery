@@ -39,18 +39,17 @@ const MyPrompts = () => {
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('search') || '';
   const observer = useRef();
-  const loadingRef = useRef(false);
 
   const lastItemRef = useCallback(node => {
+    if (loading || error) return;
     if (observer.current) observer.current.disconnect();
-    if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+      if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => prevPage + 1);
       }
-    }, { rootMargin: '100px', threshold: 1.0 });
-    observer.current.observe(node);
-  }, [hasMore]);
+    }, { rootMargin: '100px' });
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore, error]);
 
   useEffect(() => {
     const fetchMyPrompts = async () => {
@@ -58,7 +57,6 @@ const MyPrompts = () => {
 
       setError(null);
       setLoading(true);
-      loadingRef.current = true;
       try {
         let url = `${API_BASE}/prompts/my?page=${page}&limit=10`;
         if (searchQuery) {
@@ -111,7 +109,6 @@ const MyPrompts = () => {
         setError(err.message);
       } finally {
         setLoading(false);
-        loadingRef.current = false;
         setInitialLoading(false);
       }
     };
