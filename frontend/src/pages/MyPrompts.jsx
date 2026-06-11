@@ -47,12 +47,12 @@ const MyPrompts = () => {
     if (observer.current) observer.current.disconnect();
     if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering && !error) {
         setPage(prevPage => prevPage + 1);
       }
     }, { rootMargin: '100px' });
     observer.current.observe(node);
-  }, [hasMore, isRendering]);
+  }, [hasMore, isRendering, error]);
 
   useEffect(() => {
     const fetchMyPrompts = async () => {
@@ -108,7 +108,7 @@ const MyPrompts = () => {
         if (result.meta.stats) {
           setStats(result.meta.stats);
         }
-        setIsRendering(true);
+        setIsRendering(formattedItems.length > 0);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -118,7 +118,9 @@ const MyPrompts = () => {
       }
     };
 
-    fetchMyPrompts();
+    if (hasMore || page === 1) {
+      fetchMyPrompts();
+    }
   }, [page, refreshKey, searchQuery]);
 
   // Refetch when user logs in/out (skip initial auth resolution)

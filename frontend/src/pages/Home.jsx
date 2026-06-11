@@ -107,13 +107,13 @@ const Home = () => {
     if (observer.current) observer.current.disconnect();
     if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering && !error) {
         if (showLoginModalRef.current) return;
         setPage(prevPage => prevPage + 1);
       }
     }, { rootMargin: '100px' });
     observer.current.observe(node);
-  }, [hasMore, isRendering]);
+  }, [hasMore, isRendering, error]);
 
   useEffect(() => {
     const fetchPrompts = async () => {
@@ -180,7 +180,7 @@ const Home = () => {
           return [...prevItems, ...newItems];
         });
         setHasMore(result.meta.hasMore);
-        setIsRendering(true); // Start rendering phase
+        setIsRendering(formattedItems.length > 0);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -189,7 +189,7 @@ const Home = () => {
       }
     };
 
-    if (hasMore) {
+    if (hasMore || page === 1) {
       fetchPrompts();
     }
   }, [page, refreshKey]);

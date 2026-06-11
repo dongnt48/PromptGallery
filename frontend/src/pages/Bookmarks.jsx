@@ -41,12 +41,12 @@ const Bookmarks = () => {
     if (observer.current) observer.current.disconnect();
     if (!node) return;
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current && !isRendering && !error) {
         setPage(prevPage => prevPage + 1);
       }
     }, { rootMargin: '100px' });
     observer.current.observe(node);
-  }, [hasMore, isRendering]);
+  }, [hasMore, isRendering, error]);
 
   useEffect(() => {
     const fetchBookmarks = async () => {
@@ -102,7 +102,7 @@ const Bookmarks = () => {
         if (result.meta.stats) {
           setTotalBookmarks(result.meta.stats.totalBookmarks);
         }
-        setIsRendering(true);
+        setIsRendering(formattedItems.length > 0);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -112,7 +112,9 @@ const Bookmarks = () => {
       }
     };
 
-    fetchBookmarks();
+    if (hasMore || page === 1) {
+      fetchBookmarks();
+    }
   }, [page, refreshKey, searchQuery]);
 
   // Refetch when user logs in/out (skip initial auth resolution)
