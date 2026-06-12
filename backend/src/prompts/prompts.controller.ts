@@ -52,9 +52,10 @@ export class PromptsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('search') search: string,
+    @Query('visibility') visibility: string,
     @Req() req: any,
   ) {
-    return this.promptsService.findAll(page, limit, req.user.id, req.user.id, undefined, undefined, search);
+    return this.promptsService.findAll(page, limit, req.user.id, req.user.id, undefined, undefined, search, visibility || undefined);
   }
 
   @Get('bookmarks')

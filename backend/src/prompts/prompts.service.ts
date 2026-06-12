@@ -21,7 +21,7 @@ export class PromptsService {
 
   constructor(private prisma: PrismaService) {}
 
-  async findAll(page: number = 1, limit: number = 10, userId?: bigint, authorId?: bigint, tagSlugs?: string[], aiModel?: string, searchKeyword?: string) {
+  async findAll(page: number = 1, limit: number = 10, userId?: bigint, authorId?: bigint, tagSlugs?: string[], aiModel?: string, searchKeyword?: string, visibility?: string) {
     const skip = (page - 1) * limit;
     const take = limit;
 
@@ -34,6 +34,12 @@ export class PromptsService {
       whereClause.isPublic = true;
     } else if (userId === undefined || userId === null || BigInt(userId) !== BigInt(authorId)) {
       whereClause.isPublic = true;
+    } else if (visibility === 'public') {
+      whereClause.isPublic = true;
+    } else if (visibility === 'private') {
+      whereClause.isPublic = false;
+    } else if (visibility === 'liked' && userId) {
+      whereClause.likes = { some: { userId } };
     }
 
     if (aiModel) {

@@ -66,6 +66,9 @@ const MyPrompts = () => {
         if (searchQuery) {
           url += `&search=${encodeURIComponent(searchQuery)}`;
         }
+        if (filter !== 'all') {
+          url += `&visibility=${filter}`;
+        }
         const response = await fetch(url, {
           credentials: 'include'
         });
@@ -121,7 +124,7 @@ const MyPrompts = () => {
     if (hasMore || page === 1) {
       fetchMyPrompts();
     }
-  }, [page, refreshKey, searchQuery]);
+  }, [page, refreshKey, searchQuery, filter]);
 
   // Refetch when user logs in/out (skip initial auth resolution)
   useEffect(() => {
@@ -139,7 +142,7 @@ const MyPrompts = () => {
     }
   }, [user]);
 
-  // Reset page and items when search query changes (skip first mount)
+  // Reset page and items when search query or filter changes (skip first mount)
   useEffect(() => {
     if (isFirstMount.current) {
       isFirstMount.current = false;
@@ -148,7 +151,9 @@ const MyPrompts = () => {
     setItems([]);
     setPage(1);
     setHasMore(true);
-  }, [searchQuery]);
+    setInitialLoading(true);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [searchQuery, filter]);
 
   // Listen for new prompt creation and refresh the list
   useEffect(() => {
@@ -266,12 +271,8 @@ const MyPrompts = () => {
   // Stats from backend
   const { totalPrompts, publicCount, privateCount, totalLikes } = stats;
 
-  const filteredItems = items.filter(item => {
-    if (filter === 'public') return item.isPublic;
-    if (filter === 'private') return !item.isPublic;
-    if (filter === 'liked') return item.isLiked || item.likesCount > 0;
-    return true; // 'all'
-  });
+  // All filtering is now done server-side via visibility param
+  const filteredItems = items;
 
   if (!user) {
     return (
